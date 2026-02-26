@@ -1,0 +1,50 @@
+@model IEnumerable<RealEstateUser.Models.PropertyModel>
+
+@if (Model != null && Model.Any())
+{
+    @foreach (var property in Model)
+    {
+        <div class="col-lg-4 col-md-6 mb-4">
+            <a href="@Url.Action("PropertyDetail", "Home", new { id = property.PropertyID })" class="text-decoration-none">
+                <div class="property-card h-100 position-relative border-0 shadow-sm rounded-4 overflow-hidden" style="transition: transform 0.3s, box-shadow 0.3s;">
+                    <!-- Badge for Sell/Rent -->
+                    <div class="position-absolute top-0 end-0 m-3 p-2 bg-gradient bg-primary text-white border border-light rounded-pill shadow-sm" style="font-size: 0.85rem; font-weight: 600; z-index: 10;">
+                        @if(property.Type == "Rent") {
+                            <i class="fa-solid fa-key me-1"></i> <span>For Rent</span>
+                        } else {
+                            <i class="fa-solid fa-house-circle-check me-1"></i> <span>For Sale</span>
+                        }
+                    </div>
+
+                    <img src="@property.ImageUrl" alt="@property.Title" class="w-100" style="height: 250px; object-fit: cover; transition: transform 0.5s;">
+                    
+                    <div class="card-body p-4 bg-white">
+                        <h4 class="fw-bold text-dark text-truncate mb-2">@property.Title</h4>
+                        <p class="text-muted small mb-3"><i class="fa-solid fa-location-dot text-danger me-2"></i>@property.Location</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                            <div>
+                                <span class="d-block text-muted" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Price</span>
+                                <span class="fw-bold fs-5 text-primary" style="font-family: monospace;">$@(property.Price.ToString("N0"))</span>
+                            </div>
+                            <div class="btn btn-outline-primary rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    }
+}
+else
+{
+    <div class="col-12 text-center py-5">
+        <div class="p-5 bg-white rounded-4 shadow-sm">
+            <i class="fa-solid fa-face-frown text-muted fa-4x mb-3"></i>
+            <h3 class="fw-bold text-dark">No Properties Found</h3>
+            <p class="text-muted">Try adjusting your filters to find exactly what you're looking for!</p>
+            <button class="btn btn-primary px-4 mt-3 rounded-pill shadow-sm" onclick="document.getElementById('searchForm').reset(); performSearch(event);">Clear Filters</button>
+        </div>
+    </div>
+}

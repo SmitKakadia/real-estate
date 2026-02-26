@@ -1,0 +1,222 @@
+﻿@model IEnumerable<RealEstateUser.Models.PropertyModel>
+
+@{
+    ViewData["Title"] = "My Properties";
+    string currentUserId = Context.Session.GetString("UserID");
+}
+
+<!-- Custom CSS for card effects -->
+<style>
+    .property-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .property-card .card-img-top {
+            height: 200px;
+            object-fit: cover;
+        }
+
+    .edit-btn, .delete-btn {
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+        .edit-btn:hover {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .delete-btn:hover {
+            background-color: #dc3545;
+            color: #fff;
+        }
+</style>
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">My Properties</h2>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-warning">@ViewBag.ErrorMessage</div>
+    }
+
+    <div class="row">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var property in Model)
+            {
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card property-card">
+                        <img src="@property.ImageUrl" class="card-img-top" alt="@property.Title">
+                        <div class="card-body">
+                            <h5 class="card-title">@property.Title</h5>
+                            <p class="card-text">@property.Location</p>
+                            <p class="card-text text-primary">$@property.Price</p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <strong>Type:</strong> @property.Type |
+                                    <strong>Status:</strong> @property.Status
+                                </small>
+                            </p>
+                            <!-- Display CreatedBy and BuyerName -->
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <strong>Sell By:</strong> @property.CreatedBy
+                                </small>
+                            </p>
+                            @if (!string.IsNullOrEmpty(property.BuyerName))
+                            {
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <strong>Purchased By:</strong> @property.BuyerName
+                                    </small>
+                                </p>
+                            }
+                            @if (currentUserId == property.UserID.ToString() && property.Status == "Pending")
+                            {
+                                <button class="btn btn-outline-primary edit-btn me-2" data-id="@property.PropertyID" onclick="openEditModal(@property.PropertyID)">Edit</button>
+                                <button class="btn btn-outline-danger delete-btn" data-id="@property.PropertyID" onclick="deleteProperty(@property.PropertyID)">Delete</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center">
+                <p class="text-muted">You have not listed any properties yet.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Bootstrap Modal for Editing Property -->
+<div class="modal fade" id="editPropertyModal" tabindex="-1" aria-labelledby="editPropertyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editPropertyForm" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPropertyModalLabel">Edit Property</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="PropertyID" name="PropertyID" />
+                    <input type="hidden" id="UserID" name="UserID" />
+                    <div class="mb-3">
+                        <label for="Title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="Title" name="Title" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="Location" name="Location" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Description" class="form-label">Description</label>
+                        <textarea class="form-control" id="Description" name="Description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Price" class="form-label">Price</label>
+                        <input type="number" class="form-control" id="Price" name="Price" required />
+                    </div>
+                   
+                    <input type="hidden" id="Type" name="Type" value="Sell" />
+                    <input type="hidden" id="Status" name="Status" value="Pending" />
+                    <div class="mb-3">
+                        <label for="ImageUrl" class="form-label">Upload New Image</label>
+                        <input type="file" class="form-control" id="ImageUrl" name="ImageUrl" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update Property</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Open Edit Modal and Populate Form with Property Data
+        function openEditModal(propertyId) {
+            $.ajax({
+                url: '@Url.Action("Edit", "Property")',
+                type: 'GET',
+                data: { id: propertyId },
+                success: function (data) {
+                    if (data) {
+                        console.log("Property Data:", data);
+                        // Populate form fields with property details
+                        $('#PropertyID').val(data.propertyID);
+                        $('#UserID').val(data.userID);
+                        $('#Title').val(data.title);
+                        $('#Location').val(data.location);
+                        $('#Description').val(data.description);
+                        $('#Price').val(data.price);
+                        // Show modal
+                        let editModal = new bootstrap.Modal(document.getElementById('editPropertyModal'));
+                        editModal.show();
+                    } else {
+                        alert("Error: No property data received.");
+                    }
+                },
+                error: function () {
+                    alert('Error retrieving property details.');
+                }
+            });
+        }
+
+        // Handle the form submission via AJAX for editing
+        $("#editPropertyForm").submit(function (e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            $.ajax({
+                url: '@Url.Action("Edit", "Property")',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    alert("Property updated successfully!");
+                    location.reload();
+                },
+                error: function () {
+                    alert('Error updating property.');
+                }
+            });
+        });
+
+        // Delete Property using AJAX
+        function deleteProperty(propertyId) {
+            console.log("Deleting property with ID:", propertyId);
+            if (confirm("Are you sure you want to delete this property?")) {
+                $.ajax({
+                    url: '@Url.Action("DeleteProperty", "Property")' + '/' + propertyId,
+                    type: 'DELETE',
+                    success: function (response) {
+                        if (response.success) {
+                            alert(response.message);
+                            location.reload(); 
+                        }
+                        else {
+                            alert("Failed to delete property: " + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert("Error deleting property.");
+                    }
+                });
+            }
+        }
+    </script>
+}

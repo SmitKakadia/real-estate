@@ -1,0 +1,222 @@
+﻿@{
+    ViewData["Title"] = "Real Estate Platform";
+}
+@using RealEstateUser.Models;
+@model IEnumerable<RealEstateUser.Models.PropertyModel>
+
+<style>
+    /* Premium Hero Section */
+    .hero-section {
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('https://source.unsplash.com/1600x600/?luxury-real-estate,modern-home') no-repeat center center;
+        background-size: cover;
+        padding: 120px 0 80px 0;
+        color: white;
+        text-align: center;
+        margin-top: -20px;
+        margin-left: -20px;
+        margin-right: -20px;
+        position: relative;
+    }
+    
+    .hero-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 3.5rem;
+        font-weight: 700;
+        letter-spacing: -1px;
+        margin-bottom: 20px;
+        animation: fadeInDown 1s ease-out;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        font-weight: 300;
+        margin-bottom: 40px;
+        opacity: 0.9;
+        animation: fadeInUp 1s ease-out;
+    }
+
+    /* Floating Search Bar */
+    .search-box {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        max-width: 1000px;
+        margin: 0 auto;
+        transform: translateY(50%);
+        z-index: 2;
+        position: relative;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #f39c12;
+        box-shadow: 0 0 10px rgba(243, 156, 18, 0.2);
+    }
+
+    .btn-search {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: bold;
+        border: none;
+        transition: transform 0.3s, box-shadow 0.3s;
+        height: 100%;
+        width: 100%;
+    }
+
+    .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        color: white;
+    }
+
+    /* Property Section */
+    .properties-section {
+        background: transparent;
+        padding: 100px 20px 60px 20px;
+    }
+
+    .section-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 40px;
+        text-align: center;
+        position: relative;
+    }
+
+    .section-title::after {
+        content: '';
+        width: 80px;
+        height: 4px;
+        background: #f39c12;
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 2px;
+    }
+
+    /* Card Hover Anim */
+    .property-card:hover {
+        transform: translateY(-10px) !important;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+    }
+    
+    .property-card img:hover {
+        transform: scale(1.05) !important;
+    }
+
+    @@keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Find Your Dream Property</h1>
+        <p class="hero-subtitle">Discover the perfect home for sale or rent with our advanced search.</p>
+
+        <!-- Search Bar -->
+        <div class="search-box">
+            <form id="searchForm" onsubmit="event.preventDefault(); performSearch();">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-location-dot"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="filterLocation" placeholder="City or Location">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" id="filterMinPrice" placeholder="Min Price ($)">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" id="filterMaxPrice" placeholder="Max Price ($)">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterType">
+                            <option value="">Any Type (Buy / Rent)</option>
+                            <option value="Sell">For Sale</option>
+                            <option value="Rent">For Rent</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-search">
+                            <i class="fa-solid fa-magnifying-glass me-2"></i>Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Properties Listing -->
+<div class="properties-section">
+    <div class="container">
+        <h2 class="section-title">Latest Listings</h2>
+        
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="text-center d-none my-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Property Grid Container -->
+        <div class="row g-4 mt-2" id="propertyList">
+            @await Html.PartialAsync("_PropertyGrid", Model)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function performSearch() {
+            // Get form values
+            const location = $('#filterLocation').val();
+            const minPrice = $('#filterMinPrice').val();
+            const maxPrice = $('#filterMaxPrice').val();
+            const type = $('#filterType').val();
+
+            // Show Loading
+            $('#propertyList').hide();
+            $('#loadingSpinner').removeClass('d-none');
+
+            // Make AJAX Request
+            $.ajax({
+                url: '@Url.Action("SearchAjax", "Home")',
+                type: 'GET',
+                data: {
+                    location: location,
+                    minPrice: minPrice,
+                    maxPrice: maxPrice,
+                    type: type
+                },
+                success: function (result) {
+                    $('#loadingSpinner').addClass('d-none');
+                    $('#propertyList').html(result).fadeIn(400);
+                },
+                error: function (xhr, status, error) {
+                    $('#loadingSpinner').addClass('d-none');
+                    $('#propertyList').html('<div class="col-12 text-center text-danger"><i class="fa-solid fa-triangle-exclamation mb-2 fa-2x"></i><h4>Failed to load properties. Try again later.</h4></div>').show();
+                }
+            });
+        }
+    </script>
+}
