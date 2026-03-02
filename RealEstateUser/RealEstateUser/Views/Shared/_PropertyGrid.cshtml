@@ -5,17 +5,43 @@
     @foreach (var property in Model)
     {
         <div class="col-lg-4 col-md-6 mb-4">
-            <a href="@Url.Action("PropertyDetail", "Home", new { id = property.PropertyID })" class="text-decoration-none">
-                <div class="property-card h-100 position-relative border-0 shadow-sm rounded-4 overflow-hidden" style="transition: transform 0.3s, box-shadow 0.3s;">
-                    <!-- Badge for Sell/Rent -->
-                    <div class="position-absolute top-0 end-0 m-3 p-2 bg-gradient bg-primary text-white border border-light rounded-pill shadow-sm" style="font-size: 0.85rem; font-weight: 600; z-index: 10;">
-                        @if(property.Type == "Rent") {
-                            <i class="fa-solid fa-key me-1"></i> <span>For Rent</span>
-                        } else {
-                            <i class="fa-solid fa-house-circle-check me-1"></i> <span>For Sale</span>
-                        }
-                    </div>
+            <div class="property-card position-relative border-0 shadow-sm rounded-4 overflow-hidden h-100" style="transition: transform 0.3s, box-shadow 0.3s;">
+                <!-- Badge for Sell/Rent -->
+                <div class="position-absolute top-0 end-0 m-3 p-2 bg-gradient bg-primary text-white border border-light rounded-pill shadow-sm" style="font-size: 0.85rem; font-weight: 600; z-index: 10;">
+                    @if(property.Type == "Rent") {
+                        <i class="fa-solid fa-key me-1"></i> <span>For Rent</span>
+                    } else {
+                        <i class="fa-solid fa-house-circle-check me-1"></i> <span>For Sale</span>
+                    }
+                </div>
 
+                @{
+                    var sessionUserStr = Context.Session.GetString("UserID");
+                    int? sessionUserID = null;
+                    if (int.TryParse(sessionUserStr, out int uid))
+                    {
+                        sessionUserID = uid;
+                    }
+                }
+
+                @if (sessionUserID.HasValue && property.UserID != sessionUserID.Value)
+                {
+                    var isFav = ViewBag.FavoriteIDs != null && ViewBag.FavoriteIDs.Contains(property.PropertyID.Value);
+                    <button class="position-absolute top-0 start-0 m-3 p-2 bg-white rounded-circle shadow-sm border-0 favorite-btn" 
+                            style="width: 40px; height: 40px; z-index: 10; color: #e74c3c; transition: transform 0.2s;"
+                            onclick="toggleFavorite(event, @property.PropertyID, this)">
+                        @if (isFav)
+                        {
+                            <i class="fa-solid fa-heart fs-5 text-danger toggle-icon-@property.PropertyID"></i>
+                        }
+                        else
+                        {
+                            <i class="fa-regular fa-heart fs-5 toggle-icon-@property.PropertyID"></i>
+                        }
+                    </button>
+                }
+
+                <a href="@Url.Action("PropertyDetail", "Home", new { id = property.PropertyID })" class="text-decoration-none">
                     <img src="@property.ImageUrl" alt="@property.Title" class="w-100" style="height: 250px; object-fit: cover; transition: transform 0.5s;">
                     
                     <div class="card-body p-4 bg-white">
@@ -32,8 +58,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </a>
+                </a>
+            </div>
         </div>
     }
 }

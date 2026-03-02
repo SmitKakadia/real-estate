@@ -151,6 +151,25 @@
             color: white;
         }
 
+        .btn-contact {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-contact:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+            color: white;
+        }
+
         .btn-action {
             flex: 1;
             background: #f8fafc;
@@ -169,6 +188,27 @@
             background: #e2e8f0;
             color: #1e293b;
             transform: translateY(-3px);
+        }
+
+        .btn-save {
+            flex: 1;
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeeba;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-save:hover {
+            background: #ffeeba;
+            color: #856404;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.2);
         }
 
         .feedback-section {
@@ -323,11 +363,16 @@
                         }
                         else
                         {
-                            <button class="btn-buy" data-bs-toggle="modal" data-bs-target="#buyModal">
-                                <i class="fa-solid fa-cart-shopping me-2"></i> Proceed to Order
-                            </button>
+                            <div class="d-flex w-100 gap-3">
+                                <button class="btn-buy" data-bs-toggle="modal" data-bs-target="#buyModal" style="flex: 1;">
+                                    <i class="fa-solid fa-cart-shopping me-2"></i> Proceed to @(Model.Type.ToLower() == "rent" ? "Rent" : "Buy")
+                                </button>
+                                <button class="btn-contact" data-bs-toggle="modal" data-bs-target="#contactModal" title="Contact Seller">
+                                    <i class="fa-solid fa-phone"></i>
+                                </button>
+                            </div>
                         }
-                        
+
                         <div class="d-flex gap-3">
                             <button type="button" class="btn-action w-100" data-bs-toggle="modal" data-bs-target="#feedbackModal">
                                 <i class="fa-regular fa-comment-dots me-2"></i> Feedback
@@ -364,11 +409,11 @@
             <div class="modal-content border-0 rounded-4 shadow-lg">
                 <form id="buyForm">
                     <div class="modal-header border-bottom-0 pt-4 px-4">
-                        <h5 class="modal-title fw-bold text-dark" id="buyModalLabel"><i class="fa-solid fa-shield-halved text-success me-2"></i>Confirm Purchase</h5>
+                        <h5 class="modal-title fw-bold text-dark" id="buyModalLabel"><i class="fa-solid fa-shield-halved text-success me-2"></i>Confirm @(Model.Type.ToLower() == "rent" ? "Rental" : "Purchase")</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body px-4 py-3">
-                        <p class="text-muted fs-5">You are about to initiate the purchase process for <strong>@Model.Title</strong>.</p>
+                        <p class="text-muted fs-5">You are about to initiate the @(Model.Type.ToLower() == "rent" ? "rental" : "purchase") process for <strong>@Model.Title</strong>.</p>
                         <div class="p-3 bg-light rounded-3 mt-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="text-muted">Total Price:</span>
@@ -382,6 +427,31 @@
                         <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">Confirm & Checkout</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 rounded-4 shadow-lg text-center" style="background: linear-gradient(to bottom, #ffffff, #f8fafc);">
+                <div class="modal-body p-5">
+                    <div class="mb-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 80px; height: 80px;">
+                            <i class="fa-solid fa-phone-volume fa-2x"></i>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-1">Seller Contact</h4>
+                    <p class="text-muted small mb-4">Reach out to discuss details</p>
+                    
+                    <div class="p-3 bg-white rounded-3 border mb-4 shadow-sm">
+                        <span class="fs-4 fw-bold text-primary" style="font-family: monospace; letter-spacing: 1px;">@(string.IsNullOrEmpty(Model.SellerPhone) ? "Not Available" : Model.SellerPhone)</span>
+                    </div>
+
+                    <button type="button" class="btn w-100 fw-bold rounded-pill text-white shadow-sm" style="background: linear-gradient(135deg, #1e293b, #0f172a);" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-arrow-left me-2"></i> Go Back
+                    </button>
+                </div>
             </div>
         </div>
     </div>

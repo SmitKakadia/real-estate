@@ -1,0 +1,194 @@
+@model IEnumerable<RealEstateUser.Models.PropertyModel>
+@{
+    ViewData["Title"] = "Favorite Properties";
+}
+
+<style>
+    .properties-section {
+        background: transparent;
+        padding: 60px 20px;
+    }
+
+    .section-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 40px;
+        position: relative;
+    }
+
+    .section-title::after {
+        content: '';
+        width: 80px;
+        height: 4px;
+        background: #f39c12;
+        position: absolute;
+        bottom: -15px;
+        left: 0;
+        border-radius: 2px;
+    }
+
+    .property-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+        height: 100%;
+        background: white;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    }
+
+    .property-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    .property-img-wrapper {
+        position: relative;
+        height: 250px;
+        overflow: hidden;
+    }
+
+    .property-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .property-card:hover .property-img-wrapper img {
+        transform: scale(1.05);
+    }
+
+    .property-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(5px);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        color: #2c3e50;
+        z-index: 10;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .favorite-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        color: #e74c3c;
+        border: none;
+    }
+
+    .property-price {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #f39c12;
+        margin-bottom: 15px;
+    }
+
+    .property-location {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .card-body {
+        padding: 25px;
+    }
+
+    .btn-details {
+        background: transparent;
+        color: #2c3e50;
+        border: 2px solid #2c3e50;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+
+    .btn-details:hover {
+        background: #2c3e50;
+        color: white;
+    }
+</style>
+
+<div class="container properties-section">
+    <h2 class="section-title">Favorite Properties</h2>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info border-0 rounded-3 shadow-sm mt-4 text-center p-5">
+            <i class="fa-regular fa-heart fa-3x mb-3 text-muted"></i>
+            <h4>No favorite properties yet.</h4>
+            <p class="text-muted">Start browsing and add properties to your wishlist to see them here.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-3">Browse Properties</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4 mt-2">
+            @foreach (var property in Model)
+            {
+                <div class="col-md-6 col-lg-4" id="prop-card-@property.PropertyID">
+                    <div class="property-card">
+                        <div class="property-img-wrapper">
+                            <span class="property-badge">@property.Type</span>
+                            <!-- Show as solid heart since it's already favorited -->
+                            <button class="favorite-btn" onclick="toggleFavorite(@property.PropertyID)" title="Remove from Favorites">
+                                <i class="fa-solid fa-heart fs-5"></i>
+                            </button>
+                            <img src="@property.ImageUrl" alt="@property.Title">
+                        </div>
+                        <div class="card-body">
+                            <h5 class="fw-bold mb-2 text-truncate" title="@property.Title">@property.Title</h5>
+                            <p class="property-location"><i class="fa-solid fa-location-dot me-2"></i>@property.Location</p>
+                            <div class="property-price">$@(property.Price.ToString("N0"))</div>
+                            
+                            <hr class="text-muted opacity-25">
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-light text-dark border"><i class="fa-solid fa-circle-info me-1"></i>@property.Status</span>
+                                <a asp-controller="Home" asp-action="PropertyDetail" asp-route-id="@property.PropertyID" class="btn btn-details btn-sm px-4 py-2">View Details <i class="fa-solid fa-arrow-right ms-1"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    function toggleFavorite(id) {
+        $.ajax({
+            url: '@Url.Action("ToggleFavoriteAjax", "Property")',
+            type: 'POST',
+            data: { propertyID: id },
+            success: function(response) {
+                if(response.success) {
+                    // Since we are on the Saved properties page, toggling it should just remove the card
+                    $('#prop-card-' + id).fadeOut();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function() {
+                alert('Error connecting to server.');
+            }
+        });
+    }
+</script>
+}

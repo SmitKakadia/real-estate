@@ -45,6 +45,23 @@ namespace RealEstateUser.Controllers
                 {
                     ViewBag.ErrorMessage = "Failed to retrieve properties.";
                 }
+
+                // Fetch favorite IDs
+                try 
+                {
+                    string userIdStr = HttpContext.Session.GetString("UserID");
+                    if (!string.IsNullOrEmpty(userIdStr)) 
+                    {
+                        HttpResponseMessage favResponse = await _client.GetAsync($"{apiUrl}/favorites/{userIdStr}");
+                        if (favResponse.IsSuccessStatusCode) 
+                        {
+                            var favJson = await favResponse.Content.ReadAsStringAsync();
+                            var favList = JsonConvert.DeserializeObject<List<PropertyModel>>(favJson);
+                            ViewBag.FavoriteIDs = favList.Where(p => p.PropertyID.HasValue).Select(p => p.PropertyID.Value).ToList();
+                        }
+                    }
+                }
+                catch { ViewBag.FavoriteIDs = new List<int>(); }
             }
             catch (System.Exception ex)
             {
@@ -112,6 +129,23 @@ namespace RealEstateUser.Controllers
                 {
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     properties = JsonConvert.DeserializeObject<List<PropertyModel>>(jsonResponse);
+                    
+                    try 
+                    {
+                        string userIdStr = HttpContext.Session.GetString("UserID");
+                        if (!string.IsNullOrEmpty(userIdStr)) 
+                        {
+                            HttpResponseMessage favResponse = await _client.GetAsync($"{apiUrl}/favorites/{userIdStr}");
+                            if (favResponse.IsSuccessStatusCode) 
+                            {
+                                var favJson = await favResponse.Content.ReadAsStringAsync();
+                                var favList = JsonConvert.DeserializeObject<List<PropertyModel>>(favJson);
+                                ViewBag.FavoriteIDs = favList.Where(p => p.PropertyID.HasValue).Select(p => p.PropertyID.Value).ToList();
+                            }
+                        }
+                    }
+                    catch { ViewBag.FavoriteIDs = new List<int>(); }
+
                     return PartialView("_PropertyGrid", properties); // We will create a partial view
                 }
             }

@@ -208,5 +208,21 @@ namespace RealEstateAPI.Controllers
         }
         #endregion
 
+        #region Favorites
+        [HttpPost("toggle-favorite/{userID}/{propertyID}")]
+        public IActionResult ToggleFavorite(int userID, int propertyID)
+        {
+            var status = _propertyRepository.ToggleFavorite(userID, propertyID);
+            return Ok(new { message = status });
+        }
+
+        [HttpGet("favorites/{userID}")]
+        public IActionResult GetUserFavorites(int userID)
+        {
+            var favorites = _propertyRepository.GetUserFavorites(userID);
+            return Ok(favorites);
+        }
+        #endregion
+
     }
 }

@@ -320,5 +320,55 @@ namespace RealEstateUser.Controllers
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }
+
+        [HttpPost("ToggleFavoriteAjax")]
+        public async Task<IActionResult> ToggleFavoriteAjax(int propertyID)
+        {
+            string token = HttpContext.Session.GetString("AuthToken");
+            string userIdString = HttpContext.Session.GetString("UserID");
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdString))
+            {
+                return Json(new { success = false, message = "You must be logged in to favorite properties." });
+            }
+
+            int userID = int.Parse(userIdString);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            HttpResponseMessage response = await _client.PostAsync($"{apiUrl}/toggle-favorite/{userID}/{propertyID}", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                dynamic json = JsonConvert.DeserializeObject(content);
+                return Json(new { success = true, action = json.message });
+            }
+            return Json(new { success = false, message = "Failed to update favorites." });
+        }
+
+        [HttpGet("SavedProperties")]
+        public async Task<IActionResult> SavedProperties()
+        {
+            ViewBag.ActiveMenu = "SavedProperties";
+            string token = HttpContext.Session.GetString("AuthToken");
+            string userIdString = HttpContext.Session.GetString("UserID");
+
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdString))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            int userID = int.Parse(userIdString);
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            HttpResponseMessage response = await _client.GetAsync($"{apiUrl}/favorites/{userID}");
+            List<PropertyModel> favoriteProperties = new List<PropertyModel>();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                favoriteProperties = JsonConvert.DeserializeObject<List<PropertyModel>>(jsonResponse);
+            }
+
+            return View(favoriteProperties);
+        }
     }
 }

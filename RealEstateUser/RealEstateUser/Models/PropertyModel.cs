@@ -41,6 +41,7 @@ namespace RealEstateUser.Models
 
         public string CreatedBy { get; set; }
         public string BuyerName { get; set; }
+        public string SellerPhone { get; set; }
         public System.Collections.Generic.List<string> AdditionalImages { get; set; } = new System.Collections.Generic.List<string>();
     }
 

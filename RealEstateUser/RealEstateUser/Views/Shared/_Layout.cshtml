@@ -164,7 +164,17 @@
             font-weight: bold;
         }
 
-        media (max-width: 992px) {
+        @@keyframes heartBurst {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+
+        .heart-animate {
+            animation: heartBurst 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @@media (max-width: 992px) {
             .sidebar {
                 width: 80px;
                 overflow: hidden;
@@ -219,6 +229,9 @@
             <li class="@(ViewBag.ActiveMenu == "MyProperties" ? "active" : "")">
                 <a asp-action="MyProperties" asp-controller="Property">My Properties</a>
             </li>
+            <li class="@(ViewBag.ActiveMenu == "SavedProperties" ? "active" : "")">
+                <a asp-action="SavedProperties" asp-controller="Property">Favorite Properties</a>
+            </li>
         </ul>
     </div>
 
@@ -232,6 +245,59 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        window.toggleFavorite = function(e, id) {
+            if (e) e.preventDefault();
+
+            var icons = document.querySelectorAll('.toggle-icon-' + id);
+            var texts = document.querySelectorAll('.save-btn-text-' + id);
+
+            // Determine current state based on first matched icon
+            var isCurrentlySaved = icons.length > 0 && icons[0].classList.contains('fa-solid');
+            var newStateAdded = !isCurrentlySaved;
+
+            // Helper to immediately apply visual states
+            function applyState(isAdded) {
+                icons.forEach(icon => {
+                    icon.classList.remove('heart-animate');
+                    void icon.offsetWidth; // Force CSS reflow to restart animation
+                    if (isAdded) {
+                        icon.classList.remove('fa-regular');
+                        icon.classList.add('fa-solid', 'text-danger', 'heart-animate');
+                    } else {
+                        icon.classList.remove('fa-solid', 'text-danger');
+                        icon.classList.add('fa-regular');
+                    }
+                });
+                texts.forEach(t => {
+                    t.innerText = isAdded ? "Saved" : "Save Property";
+                });
+            }
+
+            // 1. Instantly toggle UI (Optimistic Update)
+            applyState(newStateAdded);
+
+            // 2. Fire background request to sync database
+            $.ajax({
+                url: '@Url.Action("ToggleFavoriteAjax", "Property")',
+                type: 'POST',
+                data: { propertyID: id },
+                success: function(response) {
+                    if (!response.success) {
+                        // Revert local changes if logic failed
+                        applyState(isCurrentlySaved);
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    // Revert local changes if network failed
+                    applyState(isCurrentlySaved);
+                    alert('Error connecting to server.');
+                }
+            });
+        };
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

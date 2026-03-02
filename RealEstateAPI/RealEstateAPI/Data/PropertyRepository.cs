@@ -106,7 +106,9 @@ namespace RealEstateAPI.Data
                         Type = reader["Type"].ToString(),
                         ImageUrl = reader["ImageUrl"].ToString(),
                         Price = Convert.ToDecimal(reader["Price"]),
-                        UserID = Convert.ToInt32(reader["UserID"])
+                        UserID = Convert.ToInt32(reader["UserID"]),
+                        CreatedBy = reader["CreatedBy"].ToString(),
+                        SellerPhone = reader["SellerPhone"] != DBNull.Value ? reader["SellerPhone"].ToString() : string.Empty
                     };
                 }
                 reader.Close();
@@ -324,6 +326,56 @@ namespace RealEstateAPI.Data
                         Price = Convert.ToDecimal(reader["Price"]),
                         UserID = Convert.ToInt32(reader["UserID"]),
                         CreatedBy = reader["UserName"] != DBNull.Value ? reader["UserName"].ToString() : null
+                    });
+                }
+            }
+            return properties;
+        }
+        #endregion
+
+        #region Favorites
+        public string ToggleFavorite(int userID, int propertyID)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                SqlCommand cmd = new SqlCommand("ToggleFavorite", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                cmd.Parameters.AddWithValue("@UserID", userID);
+                cmd.Parameters.AddWithValue("@PropertyID", propertyID);
+
+                conn.Open();
+                var result = cmd.ExecuteScalar();
+                return result != null ? result.ToString() : "Error";
+            }
+        }
+
+        public IEnumerable<PropertyModel> GetUserFavorites(int userID)
+        {
+            var properties = new List<PropertyModel>();
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                SqlCommand cmd = new SqlCommand("GetUserFavorites", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                cmd.Parameters.AddWithValue("@UserID", userID);
+
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    properties.Add(new PropertyModel
+                    {
+                        PropertyID = Convert.ToInt32(reader["PropertyID"]),
+                        Title = reader["Title"].ToString(),
+                        Location = reader["Location"].ToString(),
+                        Description = reader["Description"].ToString(),
+                        Price = Convert.ToDecimal(reader["Price"]),
+                        Type = reader["Type"].ToString(),
+                        Status = reader["Status"].ToString(),
+                        ImageUrl = reader["ImageUrl"].ToString()
                     });
                 }
             }
