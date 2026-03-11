@@ -116,6 +116,10 @@ namespace RealEstateUser.Controllers
 
             if (response.IsSuccessStatusCode)
             {
+                // Update local session so UI changes (like Navbar's Sell button) take effect immediately without requiring re-login
+                HttpContext.Session.SetString("UserName", model.UserName);
+                HttpContext.Session.SetString("UserEmail", model.Email);
+                HttpContext.Session.SetString("Role", model.Role);
                 
                 return RedirectToAction("UserProfile");
             }

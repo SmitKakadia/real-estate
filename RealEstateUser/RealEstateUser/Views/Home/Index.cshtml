@@ -1,222 +1,367 @@
 ﻿@{
-    ViewData["Title"] = "Real Estate Platform";
+    ViewData["Title"] = "Home";
+    ViewBag.ActiveMenu = "Home";
 }
-@using RealEstateUser.Models;
+@using RealEstateUser.Models
 @model IEnumerable<RealEstateUser.Models.PropertyModel>
 
+@section Styles {
 <style>
-    /* Premium Hero Section */
-    .hero-section {
-        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80') no-repeat center center;
-        background-size: cover;
-        padding: 120px 0 80px 0;
-        color: white;
-        text-align: center;
-        margin-top: -20px;
-        margin-left: -20px;
-        margin-right: -20px;
+    /* ── Hero wrapper ── */
+    .hero-wrapper {
         position: relative;
-    }
-    
-    .hero-title {
-        font-family: 'Poppins', sans-serif;
-        font-size: 3.5rem;
-        font-weight: 700;
-        letter-spacing: -1px;
-        margin-bottom: 20px;
-        animation: fadeInDown 1s ease-out;
-    }
-    
-    .hero-subtitle {
-        font-size: 1.2rem;
-        font-weight: 300;
-        margin-bottom: 40px;
-        opacity: 0.9;
-        animation: fadeInUp 1s ease-out;
+        background: var(--bg);
+        padding: 1.5rem 0 0;
+        padding-bottom: 40px;   /* just enough for the hanging filter card */
     }
 
-    /* Floating Search Bar */
-    .search-box {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-        max-width: 1000px;
+    /* ── Hero image block ── */
+    .hero {
+        position: relative;
+        height: 340px;
+        background: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80')
+                    center center / cover no-repeat;
+        border-radius: 14px;
         margin: 0 auto;
-        transform: translateY(50%);
+        max-width: 1200px;
+        width: calc(100% - 3rem);
+        overflow: visible;   /* allow search bar to hang below */
+    }
+    .hero::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 0 0 16px 16px;
+        background: linear-gradient(to bottom,
+            rgba(8,9,13,0.20) 0%,
+            rgba(8,9,13,0.50) 55%,
+            rgba(8,9,13,0.88) 100%);
+    }
+    .hero-content {
+        position: absolute;
+        inset: 0;
         z-index: 2;
-        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 0 1.5rem 3rem;
+    }
+    .hero-eyebrow {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 0.75rem;
+    }
+    .hero-title {
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.15;
+        letter-spacing: -1px;
+        margin-bottom: 0.75rem;
+    }
+    .hero-title em {
+        font-style: italic;
+        color: var(--gold);
+    }
+    .hero-subtitle {
+        font-size: 0.9rem;
+        font-weight: 300;
+        color: rgba(255,255,255,0.65);
+        max-width: 520px;
+        line-height: 1.6;
     }
 
-    .form-control, .form-select {
-        border-radius: 8px;
-        padding: 12px 15px;
-        border: 1px solid #e0e0e0;
-        transition: border-color 0.3s, box-shadow 0.3s;
+    /* ── Search bar — absolutely placed at hero bottom, centred, 50/50 split ── */
+    .search-bar-wrap {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translate(-50%, 50%);  /* exactly half above, half below hero */
+        z-index: 10;
+        width: 90%;       /* slightly narrower than hero */
+        max-width: 860px;
+        padding: 0;
     }
-
-    .form-control:focus, .form-select:focus {
-        border-color: #f39c12;
-        box-shadow: 0 0 10px rgba(243, 156, 18, 0.2);
+    .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        background: rgba(10, 12, 18, 0.45);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 14px;
+        padding: 5px;             /* insets the button from all 4 edges */
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
     }
-
-    .btn-search {
-        background: linear-gradient(135deg, #f39c12, #e67e22);
-        color: white;
-        padding: 12px 30px;
-        border-radius: 8px;
-        font-weight: bold;
+    .search-field {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1.1rem;
+        /* No hard border-right — pill shape needs softer separators */
+        border-right: 1px solid rgba(255,255,255,0.06);
+        min-width: 0;
+    }
+    .search-field:last-of-type { border-right: none; }
+    .search-field i {
+        color: var(--gold);
+        font-size: 0.78rem;
+        flex-shrink: 0;
+    }
+    .search-field-inner {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .search-field-label {
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.45);   /* readable on glass */
+        white-space: nowrap;
+    }
+    .search-input {
+        background: transparent;         /* fully transparent so glass bg shows */
         border: none;
-        transition: transform 0.3s, box-shadow 0.3s;
-        height: 100%;
+        outline: none;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.8rem;
+        color: #e5e7eb;
+        padding: 0;
+        margin: 0;
         width: 100%;
     }
-
-    .btn-search:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
-        color: white;
-    }
-
-    /* Property Section */
-    .properties-section {
-        background: transparent;
-        padding: 100px 20px 60px 20px;
-    }
-
-    .section-title {
+    .search-input::placeholder { color: rgba(255,255,255,0.30); }
+    .search-input option { background: #13151c; }
+    .search-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.72rem 1.4rem;
+        background: var(--gold);
+        border: none;
+        border-radius: 9px;     /* fully rounded on all corners — inset inside the bar */
+        color: #0a0a0a;
         font-family: 'Poppins', sans-serif;
+        font-size: 0.72rem;
         font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 40px;
-        text-align: center;
-        position: relative;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.15s;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .search-btn:hover { background: var(--gold-hover); transform: scale(1.02); }
+
+    .listings-section {
+        padding: 2.5rem 0 4rem;   /* reduced top so properties show higher on screen */
+    }
+    .section-eyebrow {
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 0.4rem;
+    }
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.5px;
+        margin-bottom: 0.35rem;
+    }
+    .section-sub {
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        max-width: 440px;
+        line-height: 1.6;
+        margin-bottom: 2rem;
     }
 
-    .section-title::after {
-        content: '';
-        width: 80px;
-        height: 4px;
-        background: #f39c12;
-        position: absolute;
-        bottom: -15px;
-        left: 50%;
-        transform: translateX(-50%);
-        border-radius: 2px;
+    /* ── Spinner ── */
+    #loadingSpinner .spinner-border {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-color: var(--gold);
+        border-right-color: transparent;
     }
 
-    /* Card Hover Anim */
-    .property-card:hover {
-        transform: translateY(-10px) !important;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+    /* ── Page footer ── */
+    .lx-footer {
+        background: var(--surface);
+        border-top: 1px solid var(--card-border);
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
     }
-    
-    .property-card img:hover {
-        transform: scale(1.05) !important;
+    .lx-footer-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #fff;
     }
-
-    @@keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @@keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
+    .lx-footer-brand i { color: var(--gold); font-size: 0.8rem; }
+    .lx-footer-copy {
+        font-size: 0.65rem;
+        color: var(--text-dim);
     }
 </style>
+}
 
-<!-- Hero Section -->
-<div class="hero-section">
-    <div class="container">
-        <h1 class="hero-title">Find Your Dream Property</h1>
-        <p class="hero-subtitle">Discover the perfect property for sale or rent with our advanced search.</p>
+<!-- ╠═ HERO WRAPPER ═╡ -->
+<div class="hero-wrapper">
 
-        <!-- Search Bar -->
-        <div class="search-box">
+    <!-- Hero image block -->
+    <div class="hero">
+        <div class="hero-content">
+            <p class="hero-eyebrow">Ultra-Premium Coastal Estates</p>
+            <h1 class="hero-title">Discover Your <em>Horizon</em></h1>
+            <p class="hero-subtitle">
+                Experience the pinnacle of coastal luxury living with our curated portfolio of ultra-premium estates.
+            </p>
+        </div>
+
+        <!-- Search bar — inside hero, hangs exactly 50% below via transform -->
+        <div class="search-bar-wrap">
             <form id="searchForm" onsubmit="event.preventDefault(); performSearch();">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-location-dot"></i></span>
-                            <input type="text" class="form-control border-start-0 ps-0" id="filterLocation" placeholder="City or Location">
+                <div class="search-bar">
+
+                    <!-- Location -->
+                    <div class="search-field">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <div class="search-field-inner">
+                            <span class="search-field-label">Location</span>
+                            <input type="text"
+                                   id="filterLocation"
+                                   class="search-input"
+                                   placeholder="City or area" />
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <input type="number" class="form-control" id="filterMinPrice" placeholder="Min Price ($)">
+
+                    <!-- Min Price -->
+                    <div class="search-field">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                        <div class="search-field-inner">
+                            <span class="search-field-label">Min Price</span>
+                            <input type="number"
+                                   id="filterMinPrice"
+                                   class="search-input"
+                                   placeholder="No min" />
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <input type="number" class="form-control" id="filterMaxPrice" placeholder="Max Price ($)">
+
+                    <!-- Max Price -->
+                    <div class="search-field">
+                        <i class="fa-solid fa-dollar-sign"></i>
+                        <div class="search-field-inner">
+                            <span class="search-field-label">Max Price</span>
+                            <input type="number"
+                                   id="filterMaxPrice"
+                                   class="search-input"
+                                   placeholder="No max" />
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <select class="form-select" id="filterType">
-                            <option value="">Any Type (Buy / Rent)</option>
-                            <option value="Sell">For Sale</option>
-                            <option value="Rent">For Rent</option>
-                        </select>
+
+                    <!-- Type -->
+                    <div class="search-field">
+                        <i class="fa-solid fa-house"></i>
+                        <div class="search-field-inner">
+                            <span class="search-field-label">Type</span>
+                            <select id="filterType" class="search-input">
+                                <option value="">Buy / Rent</option>
+                                <option value="Sell">For Sale</option>
+                                <option value="Rent">For Rent</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-search">
-                            <i class="fa-solid fa-magnifying-glass me-2"></i>Search
-                        </button>
-                    </div>
+
+                    <button type="submit" class="search-btn">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search
+                    </button>
+
                 </div>
             </form>
         </div>
-    </div>
-</div>
 
-<!-- Properties Listing -->
-<div class="properties-section">
-    <div class="container">
-        <h2 class="section-title">Latest Listings</h2>
-        
-        <!-- Loading Spinner -->
+    </div>
+
+</div><!-- /hero-wrapper -->
+
+
+<!-- ╠═ LISTINGS ═╡ -->
+<section class="listings-section">
+        <div style="max-width:1200px; margin:0 auto; padding:0 1.5rem; width:calc(100% - 3rem);">
+        <p class="section-eyebrow">Curated Excellence</p>
+        <h2 class="section-title">Featured Horizons</h2>
+        <p class="section-sub">
+            Hand-selected properties situated in the world's most sought-after locations.
+        </p>
+
+        <!-- Loading spinner -->
         <div id="loadingSpinner" class="text-center d-none my-5">
-            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <div class="spinner-border" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
 
-        <!-- Property Grid Container -->
-        <div class="row g-4 mt-2" id="propertyList">
+        <!-- Property grid — replaced by AJAX on search -->
+        <div class="row g-4" id="propertyList">
             @await Html.PartialAsync("_PropertyGrid", Model)
         </div>
     </div>
-</div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer class="lx-footer">
+    <div class="lx-footer-brand">
+        <i class="fa-solid fa-leaf"></i> Lumina Luxe
+    </div>
+    <span class="lx-footer-copy">© 2024 Lumina Luxe Global Estates. All rights reserved.</span>
+</footer>
 
 @section Scripts {
-    <script>
-        function performSearch() {
-            // Get form values
-            const location = $('#filterLocation').val();
-            const minPrice = $('#filterMinPrice').val();
-            const maxPrice = $('#filterMaxPrice').val();
-            const type = $('#filterType').val();
+<script>
+    function performSearch() {
+        var location = $('#filterLocation').val();
+        var minPrice = $('#filterMinPrice').val();
+        var maxPrice = $('#filterMaxPrice').val();
+        var type     = $('#filterType').val();
 
-            // Show Loading
-            $('#propertyList').hide();
-            $('#loadingSpinner').removeClass('d-none');
+        $('#propertyList').hide();
+        $('#loadingSpinner').removeClass('d-none');
 
-            // Make AJAX Request
-            $.ajax({
-                url: '@Url.Action("SearchAjax", "Home")',
-                type: 'GET',
-                data: {
-                    location: location,
-                    minPrice: minPrice,
-                    maxPrice: maxPrice,
-                    type: type
-                },
-                success: function (result) {
-                    $('#loadingSpinner').addClass('d-none');
-                    $('#propertyList').html(result).fadeIn(400);
-                },
-                error: function (xhr, status, error) {
-                    $('#loadingSpinner').addClass('d-none');
-                    $('#propertyList').html('<div class="col-12 text-center text-danger"><i class="fa-solid fa-triangle-exclamation mb-2 fa-2x"></i><h4>Failed to load properties. Try again later.</h4></div>').show();
-                }
-            });
-        }
-    </script>
+        $.ajax({
+            url:  '@Url.Action("SearchAjax", "Home")',
+            type: 'GET',
+            data: { location: location, minPrice: minPrice, maxPrice: maxPrice, type: type },
+            success: function(result) {
+                $('#loadingSpinner').addClass('d-none');
+                $('#propertyList').html(result).fadeIn(400);
+            },
+            error: function() {
+                $('#loadingSpinner').addClass('d-none');
+                $('#propertyList').html(
+                    '<div class="col-12 text-center py-5" style="color:#6b7280;">' +
+                    '<i class="fa-solid fa-triangle-exclamation fa-2x mb-3" style="color:#c9a227;"></i>' +
+                    '<h5 style="color:#d1d5db;">Failed to load properties. Try again later.</h5></div>'
+                ).show();
+            }
+        });
+    }
+</script>
 }

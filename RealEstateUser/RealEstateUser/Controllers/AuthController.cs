@@ -58,6 +58,10 @@ namespace RealEstateUser.Controllers
                     HttpContext.Session.SetString("Role", role);
                     HttpContext.Session.SetString("UserPassword", password);
 
+                    if (role == "Admin")
+                    {
+                        return RedirectToAction("Index", "Admin");
+                    }
                     return RedirectToAction("Index", "Home");
                 }
 

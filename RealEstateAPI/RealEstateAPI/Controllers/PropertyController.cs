@@ -40,6 +40,35 @@ namespace RealEstateAPI.Controllers
         }
         #endregion
 
+        #region Admin Property Endpoints
+        [HttpGet("unapproved")]
+        public IActionResult GetUnapprovedProperties()
+        {
+            var properties = _propertyRepository.GetUnapprovedProperties();
+            return Ok(properties);
+        }
+
+        [HttpPut("approve/{propertyID}")]
+        public IActionResult ApproveProperty(int propertyID)
+        {
+            if (_propertyRepository.ApproveProperty(propertyID))
+            {
+                return Ok(new { message = "Property approved successfully." });
+            }
+            return StatusCode(500, "Failed to approve property.");
+        }
+
+        [HttpPut("reject/{propertyID}")]
+        public IActionResult RejectProperty(int propertyID)
+        {
+            if (_propertyRepository.RejectProperty(propertyID))
+            {
+                return Ok(new { message = "Property rejected successfully." });
+            }
+            return StatusCode(500, "Failed to reject property.");
+        }
+        #endregion
+
         #region GetPropertyByID
         [HttpGet("{propertyID}")]
         public IActionResult GetPropertyByID(int propertyID)
@@ -57,16 +86,20 @@ namespace RealEstateAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> InsertProperty([FromForm] PropertyDto propertyDto)
         {
-            if (propertyDto == null || propertyDto.Image == null)
+            if (propertyDto == null || (propertyDto.Image == null && string.IsNullOrEmpty(propertyDto.ImageUrl)))
             {
-                return BadRequest("Invalid property data.");
+                return BadRequest("Invalid property data or missing image.");
             }
 
-            // Upload image to Cloudinary
-            var imageUrl = await _cloudinaryService.UploadImageAsync(propertyDto.Image);
-            if (string.IsNullOrEmpty(imageUrl))
+            // Upload image to Cloudinary if a new one is provided, otherwise use existing
+            string imageUrl = propertyDto.ImageUrl;
+            if (propertyDto.Image != null)
             {
-                return StatusCode(500, "Image upload failed.");
+                imageUrl = await _cloudinaryService.UploadImageAsync(propertyDto.Image);
+                if (string.IsNullOrEmpty(imageUrl))
+                {
+                    return StatusCode(500, "Image upload failed.");
+                }
             }
 
             var property = new PropertyModel
@@ -80,6 +113,17 @@ namespace RealEstateAPI.Controllers
                 UserID = propertyDto.UserID,
                 ImageUrl = imageUrl
             };
+
+            if (propertyDto.ExistingAdditionalImages != null && propertyDto.ExistingAdditionalImages.Count > 0)
+            {
+                foreach (var img in propertyDto.ExistingAdditionalImages)
+                {
+                    if (!string.IsNullOrEmpty(img))
+                    {
+                        property.AdditionalImages.Add(img);
+                    }
+                }
+            }
 
             if (propertyDto.AdditionalImages != null && propertyDto.AdditionalImages.Count > 0)
             {
@@ -179,7 +223,18 @@ namespace RealEstateAPI.Controllers
         }
         #endregion
 
-
+        #region CancelLease
+        [HttpPut("cancel-lease/{propertyID}/{userID}")]
+        public IActionResult CancelLease(int propertyID, int userID)
+        {
+            var isUpdated = _propertyRepository.CancelLease(propertyID, userID);
+            if (!isUpdated)
+            {
+                return BadRequest("Failed to cancel lease.");
+            }
+            return Ok(new { message = "Lease cancelled successfully." });
+        }
+        #endregion
 
         #region GetPropertiesForBuyer
         [HttpGet("buyer/{userID}")]

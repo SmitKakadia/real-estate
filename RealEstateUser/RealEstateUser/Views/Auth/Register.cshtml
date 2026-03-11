@@ -4,226 +4,485 @@
     ViewData["Title"] = "Register";
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Register - Real Estate</title>
+    <title>Register — Lumina Luxe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* ── Exact Stitch palette ── */
+        :root {
+            --bg:          #08090d;
+            --card-bg:     #111318;
+            --card-border: #2a2d35;
+            --input-bg:    #1a1d24;
+            --input-border:#2e3240;
+            --input-focus: #c9a227;
+            --label:       #6b7280;
+            --text:        #d1d5db;
+            --text-dim:    #4b5563;
+            --gold:        #c9a227;
+            --gold-hover:  #b08d1e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(-45deg, #f5f7fa, #e0eafc, #c3cfe2, #f5f7fa);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+            background-color: var(--bg);
             min-height: 100vh;
-            margin: 0;
+        }
+
+        /* ── Ambient background glows (iOS glass vibe) ── */
+        .up-glow {
+            position: fixed;
+            width: 40vw;
+            height: 40vw;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: 0;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        .up-glow-1 { top: -10%; left: -10%; background: var(--gold); }
+        .up-glow-2 { bottom: -10%; right: -10%; background: #3b82f6; } /* subtle blue contrast */
+
+        .wrapper { width: 100%; max-width: 520px; position: relative; z-index: 1; }
+
+        /* ── Card area — centers content below fixed navbar ── */
+        .card-area {
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px 0;
+            padding: 80px 1rem 2rem;
         }
 
-        @@keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* ── Navbar — fixed at top ── */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            background: rgba(8, 9, 13, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
-
-        .register-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 40px 50px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-            width: 100%;
-            max-width: 550px;
-            text-align: center;
-            opacity: 0;
-            transform: translateY(30px);
-        }
-
-        .fadeIn {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-        }
-
-        .register-logo {
-            font-size: 2.5rem;
-            color: #d4af37;
-            margin-bottom: 15px;
-        }
-
-        .register-container h2 {
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
             font-weight: 700;
-            margin-bottom: 5px;
-            color: #1e3a5f;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+        .brand i { color: var(--gold); font-size: 1rem; }
+        .nav-links { display: flex; align-items: center; gap: 1.25rem; }
+        .nav-link {
+            font-size: 0.75rem;
+            color: var(--label);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .nav-link:hover { color: #fff; }
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: var(--label);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 0.4rem 0.8rem;
+            text-decoration: none;
+            background: transparent;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .btn-back:hover { color: #fff; border-color: #555; }
+
+        /* ── Page heading ── */
+        .page-heading { text-align: center; margin-bottom: 1.75rem; }
+        .page-heading h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
             letter-spacing: -0.5px;
         }
-        
-        .register-container p {
-            color: #6c757d;
-            margin-bottom: 30px;
-            font-size: 0.95rem;
+        .page-heading p {
+            font-size: 0.82rem;
+            color: var(--label);
+            margin-top: 0.35rem;
+            font-style: italic;
         }
 
-        .form-control, .form-select {
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            padding: 12px 15px;
-            padding-left: 45px;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #d4af37;
-            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
-            background-color: #fff;
-        }
-
-        .input-group {
+        /* ── Card — heavy iOS glass ── */
+        .card {
             position: relative;
-            margin-bottom: 20px;
-            text-align: left;
+            z-index: 10;
+            background: rgba(17, 19, 24, 0.4);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15); /* top highlight */
+            border-radius: 32px;
+            padding: 2.5rem 2.5rem 2rem;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
         }
-        
-        .input-group i {
+
+        /* ── Fields ── */
+        .field { margin-bottom: 1.1rem; }
+        .field label {
+            display: block;
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--label);
+            margin-bottom: 0.45rem;
+        }
+        .input-wrap { position: relative; }
+        .input-wrap i {
             position: absolute;
-            left: 15px;
+            left: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: #a0aec0;
-            z-index: 10;
-            transition: color 0.3s;
-        }
-        
-        .form-control:focus + i, .form-select:focus + i {
-            color: #d4af37;
+            color: var(--label);
+            font-size: 0.78rem;
+            pointer-events: none;
+            transition: color 0.2s;
         }
 
-        .btn-register {
-            background: linear-gradient(135deg, #d4af37, #b08d28);
-            color: #fff;
-            padding: 14px;
-            border-radius: 10px;
+        .glass-input {
             width: 100%;
-            font-size: 16px;
-            transition: all 0.3s;
-            font-weight: 600;
-            border: none;
-            margin-top: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem 0.75rem 2.6rem;
+            font-size: 0.875rem;
+            font-family: 'Poppins', sans-serif;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.25s, box-shadow 0.25s;
+            appearance: none;
+            -webkit-appearance: none;
         }
-
-        .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
-            color: white;
-            background: linear-gradient(135deg, #b08d28, #d4af37);
+        .glass-input::placeholder { color: var(--label); }
+        .glass-input:focus {
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(201,162,39,0.18);
         }
+        .input-wrap:focus-within i { color: var(--gold); }
 
-        .login-link {
-            display: inline-block;
-            margin-top: 25px;
-            color: #4a5568;
-            font-weight: 500;
-            text-decoration: none;
-            transition: color 0.3s;
-            font-size: 0.95rem;
+        /* ── Role toggle buttons ── */
+        .role-group {
+            display: flex;
+            gap: 0.75rem;
         }
-
-        .login-link span {
-            color: #1e3a5f;
+        .role-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--label);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.72rem;
             font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+        .role-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        .role-btn.selected {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(201,162,39,0.10);
+            box-shadow: 0 0 0 2px rgba(201,162,39,0.20);
         }
 
-        .login-link:hover span {
-            text-decoration: underline;
+        /* Autofill */
+        input:-webkit-autofill, select:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
+            -webkit-text-fill-color: var(--text) !important;
         }
 
-        .alert {
-            border-radius: 10px;
-            font-weight: 500;
-            font-size: 0.9rem;
+        /* Validation errors */
+        .val-error {
+            display: block;
+            margin-top: 0.3rem;
+            font-size: 0.7rem;
+            color: #f87171;
+        }
+
+        /* Error alert */
+        .alert-error {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #f87171;
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            font-size: 0.8rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* ── Submit — gold ── */
+        .btn-submit {
+            width: 100%;
+            background: var(--gold);
+            color: #0a0a0a;
             border: none;
-            background-color: #fee2e2;
-            color: #ef4444;
+            border-radius: 8px;
+            padding: 0.9rem;
+            font-size: 0.75rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 1.25rem;
+            transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
+        .btn-submit:hover {
+            background: var(--gold-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(201,162,39,0.35);
+        }
+
+        /* ── Terms note ── */
+        .terms-note {
+            text-align: center;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            margin-top: 1rem;
+            letter-spacing: 0.2px;
+        }
+        .terms-note a { color: var(--gold); text-decoration: none; font-weight: 600; }
+        .terms-note a:hover { text-decoration: underline; }
+
+        /* ── Sign-in link ── */
+        .signin-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+        }
+        .signin-link a { color: var(--gold); font-weight: 600; text-decoration: none; }
+        .signin-link a:hover { text-decoration: underline; }
+
+        /* ── Footer badges ── */
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .badge-item {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .badge-item i { color: var(--gold); font-size: 0.6rem; }
     </style>
 </head>
 <body>
-    <div class="register-container" id="registerBox">
-        <i class="fa-solid fa-gem register-logo"></i>
-        <h2>Create an Account</h2>
-        <p>Join our exclusive real estate network today</p>
-        
-        @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
-        {
-            <div class="alert alert-danger px-3 py-2 text-start"><i class="fa-solid fa-circle-exclamation me-2"></i>@ViewBag.ErrorMessage</div>
-        }
-        
-        <form asp-action="Register" method="post">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <input asp-for="UserName" class="form-control" placeholder="Full Name" required />
-                        <i class="fa-regular fa-user"></i>
-                        <span asp-validation-for="UserName" class="text-danger small w-100 mt-1 d-block"></span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <input asp-for="Email" type="email" class="form-control" placeholder="Email Address" required />
-                        <i class="fa-regular fa-envelope"></i>
-                        <span asp-validation-for="Email" class="text-danger small w-100 mt-1 d-block"></span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <input asp-for="PhoneNo" class="form-control" placeholder="Phone Number" required />
-                        <i class="fa-solid fa-phone"></i>
-                        <span asp-validation-for="PhoneNo" class="text-danger small w-100 mt-1 d-block"></span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <select asp-for="Role" class="form-select" style="padding-left: 45px;" required>
-                            <option value="">Select Account Type</option>
-                            <option value="Buyer">Buyer (Looking to buy/rent)</option>
-                            <option value="Seller">Seller (Looking to list)</option>
-                        </select>
-                        <i class="fa-solid fa-id-badge"></i>
-                        <span asp-validation-for="Role" class="text-danger small w-100 mt-1 d-block"></span>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="input-group">
-                        <input asp-for="Password" type="password" class="form-control" placeholder="Secure Password" required />
-                        <i class="fa-solid fa-lock"></i>
-                        <span asp-validation-for="Password" class="text-danger small w-100 mt-1 d-block"></span>
-                    </div>
-                </div>
+
+    <!-- Ambient glows -->
+    <div class="up-glow up-glow-1"></div>
+    <div class="up-glow up-glow-2"></div>
+
+    <!-- ══ Fixed Navbar ══ -->
+    <nav class="navbar">
+        <div class="brand">
+            <i class="fa-solid fa-leaf"></i>
+            Lumina Luxe
+        </div>
+        <div class="nav-links">
+            <a asp-action="Index" asp-controller="Home" class="nav-link">Home</a>
+            <a asp-action="Index" asp-controller="Home" class="btn-back">
+                <i class="fa-solid fa-arrow-left" style="font-size:0.6rem;"></i> Back to Home
+            </a>
+        </div>
+    </nav>
+
+    <!-- ══ Card area centered below navbar ══ -->
+    <div class="card-area">
+        <div class="wrapper">
+
+            <!-- Page Heading -->
+            <div class="page-heading">
+                <h1>Create Your Legacy</h1>
+                <p>Join the elite circle of Lumina Luxe</p>
             </div>
 
-            <button type="submit" class="btn btn-register">Register Account <i class="fa-solid fa-user-plus ms-2"></i></button>
-        </form>
-        
-        <a asp-action="Login" class="login-link">Already a member? <span>Sign in here</span></a>
-    </div>
+        <!-- Card -->
+        <div class="card">
 
+            @* ✅ MANDATORY: ViewBag.ErrorMessage *@
+            @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+            {
+                <div class="alert-error">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>@ViewBag.ErrorMessage</span>
+                </div>
+            }
+
+            @* ✅ MANDATORY: form asp-action="Register" method="post" *@
+            <form asp-action="Register" method="post">
+
+                @* ✅ MANDATORY: asp-for="UserName" + validation *@
+                <div class="field">
+                    <label>Full Name</label>
+                    <div class="input-wrap">
+                        <input asp-for="UserName"
+                               class="glass-input"
+                               placeholder="e.g. Alexander Sterling"
+                               required />
+                        <i class="fa-regular fa-user"></i>
+                    </div>
+                    <span asp-validation-for="UserName" class="val-error"></span>
+                </div>
+
+                @* ✅ MANDATORY: asp-for="Email" + validation *@
+                <div class="field">
+                    <label>Email Address</label>
+                    <div class="input-wrap">
+                        <input asp-for="Email"
+                               type="email"
+                               class="glass-input"
+                               placeholder="name@lumina-luxe.com"
+                               required />
+                        <i class="fa-regular fa-envelope"></i>
+                    </div>
+                    <span asp-validation-for="Email" class="val-error"></span>
+                </div>
+
+                @* ✅ MANDATORY: asp-for="PhoneNo" + validation *@
+                <div class="field">
+                    <label>Phone Number</label>
+                    <div class="input-wrap">
+                        <input asp-for="PhoneNo"
+                               class="glass-input"
+                               placeholder="+1 (555) 000-0000"
+                               required />
+                        <i class="fa-solid fa-phone"></i>
+                    </div>
+                    <span asp-validation-for="PhoneNo" class="val-error"></span>
+                </div>
+
+                @* ✅ MANDATORY: Role binding — hidden input carries "Buyer"/"Seller" value to controller *@
+                <div class="field">
+                    <label>I Am A</label>
+                    <input type="hidden" asp-for="Role" id="roleInput" />
+                    <div class="role-group" id="roleGroup">
+                        <button type="button" class="role-btn" data-value="Buyer"
+                                onclick="selectRole(this)">
+                            <i class="fa-solid fa-house"></i> Buyer
+                        </button>
+                        <button type="button" class="role-btn" data-value="Seller"
+                                onclick="selectRole(this)">
+                            <i class="fa-solid fa-tag"></i> Seller
+                        </button>
+                    </div>
+                    <span asp-validation-for="Role" class="val-error"></span>
+                </div>
+
+                @* ✅ MANDATORY: asp-for="Password" + validation (kept — required by project even though Stitch omits it) *@
+                <div class="field">
+                    <label>Secure Password</label>
+                    <div class="input-wrap">
+                        <input asp-for="Password"
+                               type="password"
+                               class="glass-input"
+                               placeholder="••••••••"
+                               required />
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <span asp-validation-for="Password" class="val-error"></span>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    Register Now <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </form>
+
+            <p class="terms-note">
+                By joining, you agree to our
+                <a href="#">Terms of Service</a> &amp; <a href="#">Privacy Policy</a>
+            </p>
+
+        </div><!-- /card -->
+
+        @* ✅ MANDATORY: asp-action="Login" back-link *@
+        <p class="signin-link">
+            Already a member? <a asp-action="Login">Sign in here</a>
+        </p>
+
+        <!-- Footer badges — from Stitch Register screen -->
+        <div class="badges">
+            <span class="badge-item"><i class="fa-solid fa-shield-halved"></i> Secure Portal</span>
+            <span class="badge-item"><i class="fa-solid fa-lock"></i> SSL Encrypted</span>
+            <span class="badge-item"><i class="fa-solid fa-gem"></i> Bespoke Concierge</span>
+        </div>
+
+    </div>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.getElementById("registerBox").classList.add("fadeIn");
-        });
+        function selectRole(btn) {
+            // Deselect all
+            document.querySelectorAll('.role-btn').forEach(function(b) {
+                b.classList.remove('selected');
+            });
+            // Select clicked
+            btn.classList.add('selected');
+            // Set hidden input value — this is what gets submitted to AuthController
+            document.getElementById('roleInput').value = btn.dataset.value;
+        }
+
+        // Pre-select if model already has a value (e.g. validation re-render)
+        (function () {
+            var existing = document.getElementById('roleInput').value;
+            if (existing) {
+                var btn = document.querySelector('.role-btn[data-value="' + existing + '"]');
+                if (btn) btn.classList.add('selected');
+            }
+        })();
     </script>
+
+        </div><!-- /wrapper -->
+    </div><!-- /card-area -->
+
 </body>
 </html>

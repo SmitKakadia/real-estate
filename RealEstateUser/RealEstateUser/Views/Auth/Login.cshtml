@@ -9,183 +9,385 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Real Estate</title>
+    <title>Login — Lumina Luxe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* ── Exact Stitch palette ── */
+        :root {
+            --bg:         #08090d;       /* near-black page bg */
+            --card-bg:    #111318;       /* dark card surface  */
+            --card-border:#2a2d35;       /* subtle card border */
+            --input-bg:   #1a1d24;       /* input fields       */
+            --input-border:#2e3240;      /* input border       */
+            --input-focus:#c9a227;       /* gold focus ring    */
+            --label:      #6b7280;       /* uppercase labels   */
+            --text:       #d1d5db;       /* body text          */
+            --text-dim:   #4b5563;       /* dimmed/footer text */
+            --gold:       #c9a227;       /* Stitch gold        */
+            --gold-hover: #b08d1e;       /* gold darker hover  */
+            --tab-active: #c9a227;       /* active tab line    */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(-45deg, #f5f7fa, #e0eafc, #c3cfe2, #f5f7fa);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+            background-color: var(--bg);
             min-height: 100vh;
-            margin: 0;
+        }
+
+        /* ── Ambient background glows (iOS glass vibe) ── */
+        .up-glow {
+            position: fixed;
+            width: 40vw;
+            height: 40vw;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: 0;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        .up-glow-1 { top: -10%; left: -10%; background: var(--gold); }
+        .up-glow-2 { bottom: -10%; right: -10%; background: #3b82f6; } /* subtle blue contrast */
+
+        .wrapper { width: 100%; max-width: 420px; position: relative; z-index: 1; }
+
+        /* ── Card area — centers card vertically in remaining space ── */
+        .card-area {
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 80px 1rem 2rem;  /* 80px top = 60px navbar + 20px gap */
         }
 
-        @@keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* ── Navbar — fixed at top like main layout ── */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            background: rgba(8, 9, 13, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
-
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 50px 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-            opacity: 0;
-            transform: translateY(30px);
-        }
-
-        .fadeIn {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-        }
-
-        .login-logo {
-            font-size: 3rem;
-            color: #d4af37; /* Gold accent */
-            margin-bottom: 10px;
-        }
-
-        .login-container h2 {
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
             font-weight: 700;
-            margin-bottom: 5px;
-            color: #1e3a5f;
-            letter-spacing: -0.5px;
+            color: #fff;
+            letter-spacing: 0.5px;
         }
-        
-        .login-container p {
-            color: #6c757d;
-            margin-bottom: 30px;
+        .brand i { color: var(--gold); font-size: 1.1rem; }
+        .nav-home {
+            font-size: 0.78rem;
+            color: var(--label);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: color 0.2s;
         }
+        .nav-home:hover { color: #fff; }
 
-        .form-control {
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            padding: 12px 15px;
-            padding-left: 45px;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-        }
-
-        .form-control:focus {
-            border-color: #d4af37;
-            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
-            background-color: #fff;
-        }
-
-        .input-group {
+        /* ── Card — heavy frosted glass (iOS glass style) ── */
+        .card {
             position: relative;
-            margin-bottom: 20px;
+            z-index: 10;
+            background: rgba(17, 19, 24, 0.4);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15); /* top highlight */
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
         }
-        
-        .input-group i {
+
+        /* ── Tab bar ── */
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+        }
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--label);
+            transition: color 0.2s;
+            position: relative;
+        }
+        .tab.active {
+            color: var(--gold);
+        }
+        .tab.active::after {
+            content: '';
             position: absolute;
-            left: 15px;
+            bottom: -1px;
+            left: 0; right: 0;
+            height: 2px;
+            background: var(--gold);
+            border-radius: 2px 2px 0 0;
+        }
+        .tab:hover:not(.active) { color: var(--text); }
+
+        /* ── Form body ── */
+        .card-body { padding: 2rem 2rem 1.75rem; }
+
+        .field { margin-bottom: 1.25rem; }
+
+        .field label {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);  /* slightly lighter on glass */
+            margin-bottom: 0.5rem;
+        }
+
+        .input-wrap { position: relative; }
+
+        .input-wrap i {
+            position: absolute;
+            left: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: #a0aec0;
-            z-index: 10;
-            transition: color 0.3s;
-        }
-        
-        .form-control:focus + i {
-            color: #d4af37;
+            color: var(--label);
+            font-size: 0.8rem;
+            pointer-events: none;
+            transition: color 0.2s;
         }
 
-        .btn-login {
-            background: linear-gradient(135deg, #1e3a5f, #294b74);
-            color: #fff;
-            padding: 14px;
-            border-radius: 10px;
+        .glass-input {
             width: 100%;
-            font-size: 16px;
-            transition: all 0.3s;
-            font-weight: 600;
-            border: none;
-            margin-top: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            background: rgba(255,255,255,0.06);  /* glass input on glass card */
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            padding: 0.75rem 1rem 0.75rem 2.6rem;
+            font-size: 0.875rem;
+            font-family: 'Poppins', sans-serif;
+            color: #f3f4f6;
+            outline: none;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+        .glass-input::placeholder { color: rgba(255,255,255,0.25); }
+        .glass-input:focus {
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(201,162,39,0.18);
+        }
+        .glass-input:focus ~ i,
+        .input-wrap:focus-within i { color: var(--gold); }
+
+        /* Autofill */
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
+            -webkit-text-fill-color: var(--text) !important;
         }
 
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(30, 58, 95, 0.3);
-            color: white;
-        }
-
-        .register-link {
-            display: inline-block;
-            margin-top: 25px;
-            color: #4a5568;
-            font-weight: 500;
+        /* Forgot link inside password field */
+        .forgot-link {
+            position: absolute;
+            right: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--gold);
             text-decoration: none;
-            transition: color 0.3s;
-            font-size: 0.9rem;
+            text-transform: uppercase;
         }
+        .forgot-link:hover { text-decoration: underline; }
 
-        .register-link span {
-            color: #d4af37;
-            font-weight: 600;
-        }
-
-        .register-link:hover span {
-            text-decoration: underline;
-        }
-
-        .alert {
-            border-radius: 10px;
-            font-weight: 500;
-            font-size: 0.9rem;
+        /* ── Submit button — Stitch gold ── */
+        .btn-submit {
+            width: 100%;
+            background: var(--gold);
+            color: #0a0a0a;
             border: none;
-            background-color: #fee2e2;
-            color: #ef4444;
+            border-radius: 8px;
+            padding: 0.85rem;
+            font-size: 0.75rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
+        }
+        .btn-submit:hover {
+            background: var(--gold-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(201,162,39,0.35);
+        }
+
+        /* ── Secondary link ── */
+        .secondary-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.25rem;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+        }
+        .secondary-link a {
+            color: var(--gold);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .secondary-link a:hover { text-decoration: underline; }
+
+        /* ── Footer links ── */
+        .card-footer {
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 0.9rem 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            background: rgba(255,255,255,0.02);
+        }
+        .card-footer a {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            letter-spacing: 0.3px;
+        }
+        .card-footer a:hover { color: var(--text); }
+
+        /* ── Error alert ── */
+        .alert-error {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #f87171;
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            font-size: 0.8rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* ── Page footer ── */
+        .page-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            letter-spacing: 0.3px;
         }
     </style>
 </head>
 <body>
-    <div class="login-container" id="loginBox">
-        <i class="fa-solid fa-crown login-logo"></i>
-        <h2>Welcome Back</h2>
-        <p>Sign in to access your premium dashboard</p>
-        
-        @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
-        {
-            <div class="alert alert-danger px-3 py-2 text-start"><i class="fa-solid fa-circle-exclamation me-2"></i>@ViewBag.ErrorMessage</div>
-        }
-        
-        <form asp-action="Login" method="post">
-            <div class="input-group">
-                <input asp-for="Email" type="email" class="form-control" placeholder="Email Address" required />
-                <i class="fa-regular fa-envelope"></i>
-            </div>
-            <div class="input-group">
-                <input asp-for="Password" type="password" class="form-control" placeholder="Password" required />
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            
-            <button type="submit" class="btn btn-login">Sign In <i class="fa-solid fa-arrow-right-to-bracket ms-2"></i></button>
-        </form>
-        
-        <a asp-action="Register" class="register-link">Don't have an account? <span>Register here</span></a>
-    </div>
+    <!-- Ambient glows -->
+    <div class="up-glow up-glow-1"></div>
+    <div class="up-glow up-glow-2"></div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.getElementById("loginBox").classList.add("fadeIn");
-        });
-    </script>
+    <!-- ══ Fixed Navbar ══ -->
+    <nav class="navbar">
+        <div class="brand">
+            <i class="fa-solid fa-leaf"></i>
+            Lumina Luxe
+        </div>
+        <a asp-action="Index" asp-controller="Home" class="nav-home">
+            <i class="fa-solid fa-house" style="font-size:0.7rem;"></i> Home
+        </a>
+    </nav>
+
+    <!-- ══ Card centered in remaining viewport ══ -->
+    <div class="card-area">
+        <div class="wrapper">
+
+            <!-- Card -->
+            <div class="card">
+
+                <!-- Tab Bar -->
+                <div class="tab-bar">
+                    <span class="tab active">Login</span>
+                    <a asp-action="Register" class="tab">Register</a>
+                </div>
+
+                <div class="card-body">
+
+                    @* ✅ MANDATORY: ViewBag.ErrorMessage *@
+                    @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+                    {
+                    <div class="alert-error">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>@ViewBag.ErrorMessage</span>
+                    </div>
+                }
+
+                @* ✅ MANDATORY: form asp-action="Login" method="post" *@
+                <form asp-action="Login" method="post">
+
+                    <!-- Email -->
+                    <div class="field">
+                        <label>Email or Username</label>
+                        <div class="input-wrap">
+                            @* ✅ MANDATORY: asp-for="Email" *@
+                            <input asp-for="Email"
+                                   type="email"
+                                   class="glass-input"
+                                   placeholder="Enter your credentials"
+                                   required />
+                            <i class="fa-regular fa-user"></i>
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="field">
+                        <label>Password</label>
+                        <div class="input-wrap">
+                            @* ✅ MANDATORY: asp-for="Password" *@
+                            <input asp-for="Password"
+                                   type="password"
+                                   class="glass-input"
+                                   placeholder="••••••••"
+                                   required />
+                            <i class="fa-solid fa-lock"></i>
+                            <a href="#" class="forgot-link">Forgot?</a>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Sign In</button>
+
+                </form>
+
+                <p class="secondary-link">
+                    Don't have an account?
+                    @* ✅ MANDATORY: asp-action="Register" *@
+                    <a asp-action="Register">Create account</a>
+                </p>
+
+            </div><!-- /card-body -->
+
+            <div class="card-footer">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Support</a>
+            </div>
+
+        </div><!-- /card -->
+
+        </div><!-- /wrapper -->
+    </div><!-- /card-area -->
+
 </body>
 </html>

@@ -287,6 +287,34 @@ namespace RealEstateUser.Controllers
             }
         }
 
+        [HttpPost("CancelLeaseAjax")]
+        public async Task<IActionResult> CancelLeaseAjax(int propertyID)
+        {
+            try
+            {
+                string token = HttpContext.Session.GetString("AuthToken");
+                string userIdString = HttpContext.Session.GetString("UserID");
+
+                if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdString))
+                {
+                    return Json(new { success = false, message = "User is not authenticated." });
+                }
+
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var response = await _client.PutAsync($"{apiUrl}/cancel-lease/{propertyID}/{userIdString}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true, message = "Lease cancelled successfully." });
+                }
+                return Json(new { success = false, message = "Failed to cancel lease." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
         // DELETE: /Property/DeleteProperty/5
         [HttpDelete("DeleteProperty/{propertyId}")]
         public async Task<IActionResult> DeleteProperty(int propertyId)

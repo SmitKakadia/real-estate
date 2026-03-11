@@ -3,301 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"] - Real Estate</title>
+    <title>@ViewData["Title"] — Lumina Luxe</title>
 
-    <!-- Bootstrap & Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+        /* ── Exact Stitch palette ── */
+        :root {
+            --bg:           #08090d;
+            --surface:      #0e1017;
+            --card-bg:      #111318;
+            --card-border:  #1f2230;
+            --input-bg:     #1a1d24;
+            --input-border: #2e3240;
+            --gold:         #c9a227;
+            --gold-hover:   #b08d1e;
+            --text:         #d1d5db;
+            --text-dim:     #6b7280;
+            --label:        #4b5563;
         }
 
-        body {
-            background: linear-gradient(-45deg, #f5f7fa, #e0eafc, #c3cfe2, #f5f7fa);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: #333;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             min-height: 100vh;
         }
 
-        @@keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* NAVBAR */
-        .navbar {
-            background: linear-gradient(135deg, #1e3a5f, #294b74);
-            padding: 15px 20px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        /* ══════════════════════════
+           TOP NAVBAR  (Stitch style)
+        ══════════════════════════ */
+        .lx-nav {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             z-index: 1000;
-        }
-
-        .navbar-brand {
-            font-size: 24px;
-            font-weight: bold;
-            color: white !important;
-        }
-
-        .search-bar {
+            height: 60px;
             display: flex;
             align-items: center;
-            background: white;
-            border-radius: 8px;
-            padding: 5px 12px;
-            width: 320px;
-            max-width: 100%;
-            transition: box-shadow 0.3s;
+            padding: 0 2rem;
+            background: rgba(8, 9, 13, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
         }
 
-        .search-bar:hover {
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .search-bar input {
-            border: none;
-            outline: none;
-            width: 100%;
-            padding: 8px;
-        }
-
-        .search-bar i {
-            color: #1e3a5f;
-            margin-right: 10px;
-        }
-
-        .auth-buttons .btn {
-            margin-left: 10px;
-            font-size: 14px;
-            padding: 8px 16px;
-            transition: transform 0.3s;
-        }
-
-        .auth-buttons .btn:hover {
-            transform: scale(1.05);
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 270px;
-            background: #2c3e50;
-            color: white;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            padding-top: 70px;
-            overflow-y: auto;
-            transition: width 0.3s;
-        }
-
-        .nav-links {
-            list-style: none;
-            padding: 0;
-            margin-top: 20px;
-        }
-
-        .nav-links li {
-            margin: 15px 10px;
-        }
-
-        .nav-links a {
-            color: white;
+        /* Brand — left side */
+        .lx-nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
             text-decoration: none;
-            font-size: 18px;
-            display: block;
-            padding: 12px 15px;
-            border-radius: 8px;
-            transition: background 0.3s, transform 0.2s;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+        }
+        .lx-nav-brand i { color: var(--gold); font-size: 0.9rem; }
+
+        /* Nav links — absolutely centered in the navbar */
+        .lx-nav-links {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .lx-nav-links a {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #9ca3af;
+            text-decoration: none;
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .lx-nav-links a:hover { 
+            color: var(--gold); 
+            background: rgba(201,162,39,0.08); 
+        }
+        .lx-nav-links a.active { 
+            color: var(--gold); 
+            background: rgba(201,162,39,0.12); 
+            font-weight: 600;
         }
 
-        .nav-links a:hover, .nav-links .active a {
-            background: #f39c12;
-            transform: translateX(5px);
+        /* Auth area — pushed to right edge with margin-left:auto */
+        .lx-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .lx-user-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+            padding: 0.35rem 0.85rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .lx-user-wrapper:hover {
+            border-color: rgba(201,162,39,0.4);
+            background: rgba(201,162,39,0.05);
+        }
+        .lx-user-name {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #f3f4f6;
+            letter-spacing: 0.5px;
+        }
+        .lx-icon-profile {
+            color: var(--gold);
+            font-size: 1.1rem;
+        }
+        .lx-btn-gold {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: #0a0a0a;
+            background: var(--gold);
+            border: none;
+            border-radius: 6px;
+            padding: 0.45rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .lx-btn-gold:hover {
+            background: var(--gold-hover);
+            color: #0a0a0a;
+            transform: translateY(-1px);
+        }
+        .lx-btn-ghost {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            color: #d1d5db;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.4rem 0.85rem;
+            transition: color 0.2s, background 0.2s, border-color 0.2s;
+        }
+        .lx-btn-ghost:hover { 
+            color: #fff; 
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.25); 
+        }
+        .lx-btn-logout {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 6px;
+            padding: 0.4rem 0.85rem;
+            transition: color 0.2s, background 0.2s, border-color 0.2s;
+        }
+        .lx-btn-logout:hover { 
+            background: #ef4444; 
+            color: #fff; 
+            border-color: #ef4444;
         }
 
-        /* CONTENT AREA */
-        .content-wrapper {
-            margin-top: 70px;
-            margin-left: 270px;
-            padding: 20px;
-            transition: margin-left 0.3s;
+        /* ══════════════════════
+           MAIN CONTENT AREA
+        ══════════════════════ */
+        .lx-main {
+            padding-top: 60px; /* offset for fixed nav */
+            min-height: 100vh;
         }
 
-        /* PROPERTY CARDS */
+        /* ══════════════════════
+           PROPERTY CARDS (shared)
+        ══════════════════════ */
         .property-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background: rgba(17, 19, 24, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
             overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
         }
-
+        .property-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+            border-color: rgba(201,162,39,0.3);
+        }
         .property-card img {
             width: 100%;
-            height: 200px;
+            height: 210px;
             object-fit: cover;
+            transition: transform 0.5s;
         }
-
-        .property-card:hover {
-            transform: scale(1.03);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-        }
-
+        .property-card:hover img { transform: scale(1.04); }
         .property-card .card-body {
-            padding: 20px;
+            padding: 1.1rem 1.25rem 1.25rem;
+            background: transparent;
         }
 
-        .price {
-            font-size: 18px;
-            color: #007bff;
-            font-weight: bold;
-        }
-
+        /* Favorite heart */
         @@keyframes heartBurst {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.5); }
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.5); }
             100% { transform: scale(1); }
         }
-
-        .heart-animate {
-            animation: heartBurst 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @@media (max-width: 992px) {
-            .sidebar {
-                width: 80px;
-                overflow: hidden;
-            }
-
-            .content-wrapper {
-                margin-left: 80px;
-            }
-
-            .nav-links a {
-                text-align: center;
-                font-size: 16px;
-            }
-        }
+        .heart-animate { animation: heartBurst 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
     </style>
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">🏡 Real Estate</a>
-            <div class="ms-auto d-flex align-items-center">
-                <div class="auth-buttons d-flex align-items-center">
-                    @if (Context.Session.GetString("UserID") != null)
-                    {
-                        <span class="text-white me-3">Hello, @Context.Session.GetString("UserName")</span>
-                        <!-- User Profile Icon -->
-                        <a class="text-white me-3" href="@Url.Action("UserProfile", "User")" title="Profile">
-                            <i class="fa-solid fa-user fa-lg"></i>
-                        </a>
-                        <a class="btn btn-danger" asp-controller="Auth" asp-action="Logout">Logout</a>
-                    }
-                    else
-                    {
-                        <a class="btn btn-primary me-2" asp-controller="Auth" asp-action="Login">Login</a>
-                        <a class="btn btn-success" asp-controller="Auth" asp-action="Register">Register</a>
-                    }
-                </div>
-            </div>
+    <!-- ══ NAVBAR ══ -->
+    <nav class="lx-nav">
+        <a asp-action="Index" asp-controller="Home" class="lx-nav-brand">
+            <i class="fa-solid fa-leaf"></i> Lumina Luxe
+        </a>
+
+        <div class="lx-nav-links">
+            <a asp-action="Index" asp-controller="Home"
+               class="@(ViewBag.ActiveMenu == "Home" ? "active" : "")">Home</a>
+            <a asp-action="Index" asp-controller="Sell"
+               class="@(ViewBag.ActiveMenu == "Sell" ? "active" : "")">Sell Property</a>
+            <a asp-action="MyProperties" asp-controller="Property"
+               class="@(ViewBag.ActiveMenu == "MyProperties" ? "active" : "")">My Property</a>
+            <a asp-action="SavedProperties" asp-controller="Property"
+               class="@(ViewBag.ActiveMenu == "SavedProperties" ? "active" : "")">Favorites</a>
+            @if (Context.Session.GetString("Role") == "Admin")
+            {
+                <a asp-action="Index" asp-controller="Admin"
+                   class="@(ViewBag.ActiveMenu == "Admin" ? "active" : "")" style="color:var(--gold); border: 1px dashed var(--gold); border-radius: 6px; padding: 0.2rem 0.6rem; transform: scale(0.95);"><i class="fa-solid fa-shield-halved"></i> Admin</a>
+            }
+        </div>
+
+        <div class="lx-nav-right">
+            @if (Context.Session.GetString("UserID") != null)
+            {
+                <a href="@Url.Action("UserProfile", "User")" class="lx-user-wrapper" title="Profile">
+                    <span class="lx-user-name">@Context.Session.GetString("UserName")</span>
+                    <i class="fa-solid fa-circle-user lx-icon-profile"></i>
+                </a>
+                <a asp-controller="Auth" asp-action="Logout" class="lx-btn-logout">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Auth" asp-action="Login" class="lx-btn-ghost">Login</a>
+                <a asp-controller="Auth" asp-action="Register" class="lx-btn-gold">Register</a>
+            }
         </div>
     </nav>
 
-    <div class="sidebar">
-        <ul class="nav-links">
-            <li class="@(ViewBag.ActiveMenu == "Home" ? "active" : "")">
-                <a asp-action="Index" asp-controller="Home">Home</a>
-            </li>
-            <li class="@(ViewBag.ActiveMenu == "Sell" ? "active" : "")">
-                <a asp-action="Index" asp-controller="Sell">Sell Property</a>
-            </li>
-            <li class="@(ViewBag.ActiveMenu == "MyProperties" ? "active" : "")">
-                <a asp-action="MyProperties" asp-controller="Property">My Properties</a>
-            </li>
-            <li class="@(ViewBag.ActiveMenu == "SavedProperties" ? "active" : "")">
-                <a asp-action="SavedProperties" asp-controller="Property">Favorite Properties</a>
-            </li>
-        </ul>
-    </div>
-
-    <div class="content-wrapper">
-        <div class="container-fluid">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
-        </div>
+    <!-- ══ MAIN CONTENT ══ -->
+    <div class="lx-main">
+        @RenderBody()
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        /* ── Favourite toggle (unchanged — keep all AJAX logic) ── */
         window.toggleFavorite = function(e, id) {
             if (e) e.preventDefault();
 
             var icons = document.querySelectorAll('.toggle-icon-' + id);
             var texts = document.querySelectorAll('.save-btn-text-' + id);
-
-            // Determine current state based on first matched icon
             var isCurrentlySaved = icons.length > 0 && icons[0].classList.contains('fa-solid');
             var newStateAdded = !isCurrentlySaved;
 
-            // Helper to immediately apply visual states
             function applyState(isAdded) {
                 icons.forEach(icon => {
                     icon.classList.remove('heart-animate');
-                    void icon.offsetWidth; // Force CSS reflow to restart animation
+                    void icon.offsetWidth;
                     if (isAdded) {
                         icon.classList.remove('fa-regular');
-                        icon.classList.add('fa-solid', 'text-danger', 'heart-animate');
+                        icon.classList.add('fa-solid', 'heart-animate');
+                        icon.style.color = '#c9a227';
                     } else {
-                        icon.classList.remove('fa-solid', 'text-danger');
+                        icon.classList.remove('fa-solid');
                         icon.classList.add('fa-regular');
+                        icon.style.color = '';
                     }
                 });
-                texts.forEach(t => {
-                    t.innerText = isAdded ? "Saved" : "Save Property";
-                });
+                texts.forEach(t => { t.innerText = isAdded ? "Saved" : "Save"; });
             }
 
-            // 1. Instantly toggle UI (Optimistic Update)
             applyState(newStateAdded);
 
-            // 2. Fire background request to sync database
             $.ajax({
                 url: '@Url.Action("ToggleFavoriteAjax", "Property")',
                 type: 'POST',
                 data: { propertyID: id },
                 success: function(response) {
                     if (!response.success) {
-                        // Revert local changes if logic failed
                         applyState(isCurrentlySaved);
                         alert(response.message);
                     }
                 },
                 error: function() {
-                    // Revert local changes if network failed
                     applyState(isCurrentlySaved);
                     alert('Error connecting to server.');
                 }
             });
         };
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

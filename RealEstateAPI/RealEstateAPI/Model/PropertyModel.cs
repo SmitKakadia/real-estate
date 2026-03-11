@@ -18,6 +18,8 @@ namespace RealEstateAPI.Model
         // New fields to capture the username of the property creator and buyer
         public string CreatedBy { get; set; }
         public string BuyerName { get; set; }
+        public int? BuyerID { get; set; }
         public string SellerPhone { get; set; }
+        public bool IsApproved { get; set; }
     }
 }

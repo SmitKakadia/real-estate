@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] — Lumina Luxe Admin</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+        /* ── Exact Stitch palette ── */
+        :root {
+            --bg:           #08090d;
+            --surface:      #0e1017;
+            --card-bg:      #111318;
+            --card-border:  #1f2230;
+            --input-bg:     #1a1d24;
+            --input-border: #2e3240;
+            --gold:         #c9a227;
+            --gold-hover:   #b08d1e;
+            --text:         #d1d5db;
+            --text-dim:     #6b7280;
+            --label:        #4b5563;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ══════════════════════════
+           TOP NAVBAR  (Admin style)
+        ══════════════════════════ */
+        .lx-nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            background: rgba(17, 19, 24, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 2px solid rgba(201,162,39,0.5); /* Golden highlight for Admin */
+        }
+
+        /* Brand — left side */
+        .lx-nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #fff;
+            text-decoration: none;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        .lx-nav-brand i { color: var(--gold); font-size: 1.2rem; }
+
+        /* Nav links — absolutely centered in the navbar */
+        .lx-nav-links {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .lx-nav-links a {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #fff;
+            text-decoration: none;
+            padding: 0.4rem 1.2rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .lx-nav-links a.active { 
+            color: #0a0a0a; 
+            background: var(--gold); 
+            box-shadow: 0 4px 10px rgba(201,162,39,0.3);
+        }
+
+        /* Auth area — pushed to right edge with margin-left:auto */
+        .lx-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .lx-user-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+            padding: 0.4rem 1rem;
+            background: rgba(201,162,39,0.1);
+            border: 1px solid rgba(201,162,39,0.3);
+            border-radius: 999px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .lx-user-wrapper:hover {
+            border-color: rgba(201,162,39,0.6);
+            background: rgba(201,162,39,0.15);
+        }
+        .lx-user-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .lx-icon-profile {
+            color: var(--gold);
+            font-size: 1.1rem;
+        }
+        .lx-btn-logout {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 6px;
+            padding: 0.4rem 0.85rem;
+            transition: color 0.2s, background 0.2s, border-color 0.2s;
+        }
+        .lx-btn-logout:hover { 
+            background: #ef4444; 
+            color: #fff; 
+            border-color: #ef4444;
+        }
+
+        /* ══════════════════════
+           MAIN CONTENT AREA
+        ══════════════════════ */
+        .lx-main {
+            padding-top: 60px; /* offset for fixed nav */
+            min-height: 100vh;
+        }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- ══ ADMIN NAVBAR ══ -->
+    <nav class="lx-nav">
+        <div class="lx-nav-brand">
+            <i class="fa-solid fa-shield-halved"></i> Lumina Luxe Admin Center
+        </div>
+
+        <div class="lx-nav-links">
+            <a asp-action="Index" asp-controller="Admin"
+               class="@(ViewBag.ActiveMenu == "Admin" ? "active" : "")"><i class="fa-solid fa-list-check me-2"></i> Approvals</a>
+            <!-- You can add more admin links here in the future -->
+        </div>
+
+        <div class="lx-nav-right">
+            <div class="lx-user-wrapper" title="Admin User">
+                <span class="lx-user-name">@Context.Session.GetString("UserName")</span>
+                <i class="fa-solid fa-user-shield lx-icon-profile"></i>
+            </div>
+            <a asp-controller="Auth" asp-action="Logout" class="lx-btn-logout">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <!-- ══ MAIN CONTENT ══ -->
+    <div class="lx-main">
+        @RenderBody()
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

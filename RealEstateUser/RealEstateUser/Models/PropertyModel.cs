@@ -41,8 +41,10 @@ namespace RealEstateUser.Models
 
         public string CreatedBy { get; set; }
         public string BuyerName { get; set; }
+        public int? BuyerID { get; set; }
         public string SellerPhone { get; set; }
         public System.Collections.Generic.List<string> AdditionalImages { get; set; } = new System.Collections.Generic.List<string>();
+        public bool IsApproved { get; set; }
     }
 
     public class PropertyDto
@@ -76,10 +78,11 @@ namespace RealEstateUser.Models
         [StringLength(50, ErrorMessage = "Status must be less than 50 characters.")]
         public string Status { get; set; }
 
-       
-        [Required(ErrorMessage = "Please upload an image.")]
+        public string ExistingImageUrl { get; set; } // Added to support reselling
         public IFormFile ImageUrl { get; set; }
 
+        public System.Collections.Generic.List<string> ExistingAdditionalImages { get; set; } = new System.Collections.Generic.List<string>();
         public System.Collections.Generic.List<IFormFile> AdditionalImages { get; set; } = new System.Collections.Generic.List<IFormFile>();
+        public bool IsApproved { get; set; }
     }
 }

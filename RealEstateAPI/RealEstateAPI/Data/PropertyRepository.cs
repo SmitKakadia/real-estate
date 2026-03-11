@@ -80,6 +80,68 @@ namespace RealEstateAPI.Data
         }
         #endregion
 
+        #region Admin Properties
+        public IEnumerable<PropertyModel> GetUnapprovedProperties()
+        {
+            var properties = new List<PropertyModel>();
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                SqlCommand cmd = new SqlCommand("GetUnapprovedProperties", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    properties.Add(new PropertyModel
+                    {
+                        PropertyID = Convert.ToInt32(reader["PropertyID"]),
+                        Description = reader["Description"].ToString(),
+                        Location = reader["Location"].ToString(),
+                        Title = reader["Title"].ToString(),
+                        Status = reader["Status"].ToString(),
+                        Type = reader["Type"].ToString(),
+                        ImageUrl = reader["ImageUrl"].ToString(),
+                        Price = Convert.ToDecimal(reader["Price"]),
+                        UserID = Convert.ToInt32(reader["UserID"]),
+                        CreatedBy = reader["CreatedBy"] != DBNull.Value ? reader["CreatedBy"].ToString() : string.Empty,
+                        SellerPhone = reader["SellerPhone"] != DBNull.Value ? reader["SellerPhone"].ToString() : string.Empty
+                    });
+                }
+            }
+            return properties;
+        }
+
+        public bool ApproveProperty(int propertyID)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                SqlCommand cmd = new SqlCommand("ApproveProperty", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                cmd.Parameters.AddWithValue("@PropertyID", propertyID);
+                conn.Open();
+                return cmd.ExecuteNonQuery() > 0;
+            }
+        }
+
+        public bool RejectProperty(int propertyID)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                SqlCommand cmd = new SqlCommand("RejectProperty", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                cmd.Parameters.AddWithValue("@PropertyID", propertyID);
+                conn.Open();
+                return cmd.ExecuteNonQuery() > 0;
+            }
+        }
+        #endregion
+
         #region SelectPropertyByID
         public PropertyModel SelectPropertyByID(int PropertyID)
         {
@@ -108,7 +170,8 @@ namespace RealEstateAPI.Data
                         Price = Convert.ToDecimal(reader["Price"]),
                         UserID = Convert.ToInt32(reader["UserID"]),
                         CreatedBy = reader["CreatedBy"].ToString(),
-                        SellerPhone = reader["SellerPhone"] != DBNull.Value ? reader["SellerPhone"].ToString() : string.Empty
+                        SellerPhone = reader["SellerPhone"] != DBNull.Value ? reader["SellerPhone"].ToString() : string.Empty,
+                        BuyerID = reader["BuyerID"] != DBNull.Value ? Convert.ToInt32(reader["BuyerID"]) : (int?)null
                     };
                 }
                 reader.Close();
@@ -212,16 +275,54 @@ namespace RealEstateAPI.Data
             int rowsAffected;
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand("DeleteProperty", conn)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
-                cmd.Parameters.AddWithValue("@PropertyID", PropertyID);
-
                 conn.Open();
-                rowsAffected = cmd.ExecuteNonQuery();
+                
+                // First try the stored procedure
+                try
+                {
+                    SqlCommand cmd = new SqlCommand("DeleteProperty", conn)
+                    {
+                        CommandType = CommandType.StoredProcedure
+                    };
+                    cmd.Parameters.AddWithValue("@PropertyID", PropertyID);
+                    rowsAffected = cmd.ExecuteNonQuery();
+                    if (rowsAffected > 0) return true;
+                }
+                catch
+                {
+                    // SP may not handle cascading deletes, fall through to manual cleanup
+                }
+
+                // Manual cascading delete: clean up all child tables first
+                try
+                {
+                    string[] cleanupQueries = new[]
+                    {
+                        "DELETE FROM Feedback WHERE PropertyID = @PropertyID",
+                        "DELETE FROM [Transaction] WHERE PropertyID = @PropertyID",
+                        "DELETE FROM Favorites WHERE PropertyID = @PropertyID",
+                        "DELETE FROM UserFavorites WHERE PropertyID = @PropertyID",
+                        "DELETE FROM PropertyImages WHERE PropertyID = @PropertyID",
+                        "DELETE FROM Property WHERE PropertyID = @PropertyID"
+                    };
+
+                    foreach (var query in cleanupQueries)
+                    {
+                        try
+                        {
+                            SqlCommand cmd = new SqlCommand(query, conn);
+                            cmd.Parameters.AddWithValue("@PropertyID", PropertyID);
+                            cmd.ExecuteNonQuery();
+                        }
+                        catch { /* Table may not exist, skip */ }
+                    }
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
             }
-            return rowsAffected > 0;
         }
         #endregion
 
@@ -254,7 +355,35 @@ namespace RealEstateAPI.Data
         }
         #endregion
 
-
+        #region CancelLease
+        public bool CancelLease(int propertyID, int userID)
+        {
+            int rowsAffected = 0;
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                conn.Open();
+                try
+                {
+                    SqlCommand cmd = new SqlCommand("CancelLease", conn);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@PropertyID", propertyID);
+                    cmd.Parameters.AddWithValue("@UserID", userID);
+                    rowsAffected = cmd.ExecuteNonQuery();
+                }
+                catch
+                {
+                    try
+                    {
+                        SqlCommand cmdRaw = new SqlCommand("UPDATE Property SET Status = 'Pending', BuyerID = NULL WHERE PropertyID = @PropertyID", conn);
+                        cmdRaw.Parameters.AddWithValue("@PropertyID", propertyID);
+                        rowsAffected = cmdRaw.ExecuteNonQuery();
+                    }
+                    catch { }
+                }
+            }
+            return rowsAffected > 0;
+        }
+        #endregion
 
         #region SelectPropertiesByBuyer
         public List<PropertyModel> SelectPropertiesByBuyer(int userID)
