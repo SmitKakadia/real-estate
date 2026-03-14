@@ -22,6 +22,11 @@ namespace RealEstateUser.Controllers
         public async Task<IActionResult> Index()
         {
             ViewBag.ActiveMenu = "Home";
+
+            // Admin should never land on the user home page
+            if (HttpContext.Session.GetString("Role") == "Admin")
+                return RedirectToAction("Index", "Admin");
+
             List<PropertyModel> properties = new List<PropertyModel>();
 
             try

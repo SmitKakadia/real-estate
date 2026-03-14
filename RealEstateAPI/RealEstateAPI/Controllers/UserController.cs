@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -59,7 +59,8 @@ namespace RealEstateAPI.Controllers
                 user.UserName,
                 user.Email,
                 user.PhoneNo,
-                user.Role
+                user.Role,
+                user.Password   // needed for the edit profile hidden field
             });
         }
         #endregion
@@ -143,6 +144,10 @@ namespace RealEstateAPI.Controllers
             var existingUser = _userRepository.SelectUserByID(userID);
             if (existingUser == null)
                 return NotFound(new { message = "User not found." });
+
+            // If password not submitted (empty/null), preserve the existing one
+            if (string.IsNullOrWhiteSpace(user.Password))
+                user.Password = existingUser.Password;
 
             var success = _userRepository.UpdateUser(user);
             if (!success)

@@ -76,21 +76,23 @@
             gap: 0.5rem;
         }
         .lx-nav-links a {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #fff;
+            color: #9ca3af;
             text-decoration: none;
-            padding: 0.4rem 1.2rem;
-            border-radius: 8px;
-            transition: all 0.2s ease;
+            padding: 0.6rem 0.9rem;
+            transition: color 0.2s ease;
             white-space: nowrap;
-            letter-spacing: 1px;
-            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid transparent;
+            position: relative;
+        }
+        .lx-nav-links a:hover {
+            color: var(--gold);
         }
         .lx-nav-links a.active { 
-            color: #0a0a0a; 
-            background: var(--gold); 
-            box-shadow: 0 4px 10px rgba(201,162,39,0.3);
+            color: var(--gold);
+            border-bottom-color: var(--gold);
         }
 
         /* Auth area — pushed to right edge with margin-left:auto */
@@ -154,6 +156,24 @@
             padding-top: 60px; /* offset for fixed nav */
             min-height: 100vh;
         }
+
+        /* Admin profile pill — clean link style */
+        .admin-profile-wrapper .lx-user-wrapper,
+        a.lx-user-wrapper {
+            border: 1px solid rgba(201,162,39,0.3);
+            background: rgba(201,162,39,0.08);
+            border-radius: 999px;
+            padding: 0.35rem 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        a.lx-user-wrapper:hover {
+            border-color: rgba(201,162,39,0.6);
+            background: rgba(201,162,39,0.14);
+        }
     </style>
 
     @await RenderSectionAsync("Styles", required: false)
@@ -167,16 +187,18 @@
         </div>
 
         <div class="lx-nav-links">
-            <a asp-action="Index" asp-controller="Admin"
-               class="@(ViewBag.ActiveMenu == "Admin" ? "active" : "")"><i class="fa-solid fa-list-check me-2"></i> Approvals</a>
-            <!-- You can add more admin links here in the future -->
+            <a href="#overview" class="admin-nav-link active">Overview</a>
+            <a href="#moderation" class="admin-nav-link">Approvals</a>
+            <a href="#users" class="admin-nav-link">Users</a>
+            <a href="#inventory" class="admin-nav-link">Inventory</a>
+            <a href="#feedback" class="admin-nav-link">Feedback</a>
         </div>
 
         <div class="lx-nav-right">
-            <div class="lx-user-wrapper" title="Admin User">
+            <a href="@Url.Action("UserProfile", "User")" class="lx-user-wrapper" title="View Profile">
                 <span class="lx-user-name">@Context.Session.GetString("UserName")</span>
                 <i class="fa-solid fa-user-shield lx-icon-profile"></i>
-            </div>
+            </a>
             <a asp-controller="Auth" asp-action="Logout" class="lx-btn-logout">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
             </a>
@@ -190,6 +212,43 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Scroll spy — highlights the active nav link based on scroll position
+        (function () {
+            var sectionIds = ['overview', 'moderation', 'users', 'inventory', 'feedback'];
+            var links = document.querySelectorAll('.admin-nav-link');
+
+            function onScroll() {
+                var scrollY = window.scrollY + 120;
+                var atBottom = (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 50;
+
+                var active = sectionIds[0];
+
+                if (atBottom) {
+                    // When at the very bottom, always highlight the last section
+                    active = sectionIds[sectionIds.length - 1];
+                } else {
+                    sectionIds.forEach(function (id) {
+                        var el = document.getElementById(id);
+                        if (el && el.offsetTop <= scrollY) active = id;
+                    });
+                }
+
+                links.forEach(function (a) {
+                    var href = a.getAttribute('href');
+                    if (href === '#' + active) {
+                        a.classList.add('active');
+                    } else {
+                        a.classList.remove('active');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', onScroll);
+            onScroll(); // run once on load
+        })();
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

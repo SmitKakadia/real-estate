@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using RealEstateAPI.Model;
 using System;
@@ -106,7 +106,8 @@ namespace RealEstateAPI.Data
                         Price = Convert.ToDecimal(reader["Price"]),
                         UserID = Convert.ToInt32(reader["UserID"]),
                         CreatedBy = reader["CreatedBy"] != DBNull.Value ? reader["CreatedBy"].ToString() : string.Empty,
-                        SellerPhone = reader["SellerPhone"] != DBNull.Value ? reader["SellerPhone"].ToString() : string.Empty
+                        SellerPhone = reader["SellerPhone"] != DBNull.Value ? reader["SellerPhone"].ToString() : string.Empty,
+                        RejectionReason = reader["RejectionReason"] != DBNull.Value ? reader["RejectionReason"].ToString() : string.Empty
                     });
                 }
             }
@@ -127,7 +128,7 @@ namespace RealEstateAPI.Data
             }
         }
 
-        public bool RejectProperty(int propertyID)
+        public bool RejectProperty(int propertyID, string rejectionReason)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -136,6 +137,7 @@ namespace RealEstateAPI.Data
                     CommandType = CommandType.StoredProcedure
                 };
                 cmd.Parameters.AddWithValue("@PropertyID", propertyID);
+                cmd.Parameters.AddWithValue("@RejectionReason", string.IsNullOrEmpty(rejectionReason) ? DBNull.Value : (object)rejectionReason);
                 conn.Open();
                 return cmd.ExecuteNonQuery() > 0;
             }
@@ -171,7 +173,8 @@ namespace RealEstateAPI.Data
                         UserID = Convert.ToInt32(reader["UserID"]),
                         CreatedBy = reader["CreatedBy"].ToString(),
                         SellerPhone = reader["SellerPhone"] != DBNull.Value ? reader["SellerPhone"].ToString() : string.Empty,
-                        BuyerID = reader["BuyerID"] != DBNull.Value ? Convert.ToInt32(reader["BuyerID"]) : (int?)null
+                        BuyerID = reader["BuyerID"] != DBNull.Value ? Convert.ToInt32(reader["BuyerID"]) : (int?)null,
+                        RejectionReason = reader["RejectionReason"] != DBNull.Value ? reader["RejectionReason"].ToString() : string.Empty
                     };
                 }
                 reader.Close();
@@ -258,7 +261,16 @@ namespace RealEstateAPI.Data
                 cmd.Parameters.AddWithValue("@Description", property.Description);
                 cmd.Parameters.AddWithValue("@Price", property.Price);
                 cmd.Parameters.AddWithValue("@Type", property.Type);
-                cmd.Parameters.AddWithValue("@Status", property.Status);
+                // When modifying from frontend after a rejection, Status goes back to "Pending"
+                if (property.Status == "Pending")
+                {
+                    cmd.Parameters.AddWithValue("@Status", "Pending");
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@Status", property.Status);
+                }
+                
                 cmd.Parameters.AddWithValue("@UserID", property.UserID);
                 cmd.Parameters.AddWithValue("@ImageUrl", property.ImageUrl);
 
@@ -415,7 +427,8 @@ namespace RealEstateAPI.Data
                         UserID = Convert.ToInt32(reader["UserID"]),
                         // Reading the new fields. Ensure your stored procedure returns these columns.
                         CreatedBy = reader["CreatedBy"] != DBNull.Value ? reader["CreatedBy"].ToString() : null,
-                        BuyerName = reader["BuyerName"] != DBNull.Value ? reader["BuyerName"].ToString() : null
+                        BuyerName = reader["BuyerName"] != DBNull.Value ? reader["BuyerName"].ToString() : null,
+                        RejectionReason = reader["RejectionReason"] != DBNull.Value ? reader["RejectionReason"].ToString() : null
                     });
                 }
             }

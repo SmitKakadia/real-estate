@@ -20,6 +20,7 @@ builder.Services.AddScoped<PropertyRepository>();
 builder.Services.AddScoped<TransactionRepository>();
 builder.Services.AddScoped<FeedbackRepository>();
 builder.Services.AddScoped<DashboardRepository>();
+builder.Services.AddScoped<AdminRepository>();
 
 
 //Cloudinary Service

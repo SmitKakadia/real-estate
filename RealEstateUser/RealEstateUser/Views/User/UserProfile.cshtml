@@ -1,4 +1,4 @@
-﻿@model RealEstateUser.Models.UserModel
+@model RealEstateUser.Models.UserModel
 
 @{
     ViewData["Title"] = "User Profile";
@@ -250,7 +250,14 @@
             <!-- Header section -->
             <div class="up-header">
                 <div class="up-avatar-wrap">
-                    <i class="fa-solid fa-user-astronaut"></i>
+                    @if (Model.Role == "Admin")
+                    {
+                        <i class="fa-solid fa-user-shield"></i>
+                    }
+                    else
+                    {
+                        <i class="fa-solid fa-user-astronaut"></i>
+                    }
                     <div class="up-role-badge">@Model.Role</div>
                 </div>
                 <h1 class="up-name">@Model.UserName</h1>
@@ -314,11 +321,24 @@
                     </div>
                     
                     <div class="mb-4">
-                        <label asp-for="Role" class="up-form-label">Role</label>
-                        <select asp-for="Role" class="up-form-input" style="appearance:none; cursor:pointer;">
-                            <option value="Buyer">Buyer</option>
-                            <option value="Seller">Seller</option>
-                        </select>
+                        <label class="up-form-label">Role</label>
+                        @if (Model.Role == "Admin")
+                        {
+                            <!-- Role is locked for Admin - cannot be changed -->
+                            <input type="hidden" asp-for="Role" value="Admin" />
+                            <div class="up-form-input" style="display:flex; align-items:center; gap:0.75rem; cursor:not-allowed;">
+                                <i class="fa-solid fa-shield-halved" style="color:var(--gold);"></i>
+                                <span style="color:var(--gold); font-weight:700; letter-spacing:1px;">ADMIN</span>
+                                <span style="margin-left:auto; font-size:0.65rem; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:1px;">🔒 Locked</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <select asp-for="Role" class="up-form-input" style="appearance:none; cursor:pointer;">
+                                <option value="Buyer">Buyer</option>
+                                <option value="Seller">Seller</option>
+                            </select>
+                        }
                         <span asp-validation-for="Role" class="text-danger" style="font-size:0.75rem;"></span>
                     </div>
                     

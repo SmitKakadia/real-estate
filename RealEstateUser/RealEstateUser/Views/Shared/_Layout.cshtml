@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -243,21 +243,19 @@
             <i class="fa-solid fa-leaf"></i> Lumina Luxe
         </a>
 
-        <div class="lx-nav-links">
-            <a asp-action="Index" asp-controller="Home"
-               class="@(ViewBag.ActiveMenu == "Home" ? "active" : "")">Home</a>
-            <a asp-action="Index" asp-controller="Sell"
-               class="@(ViewBag.ActiveMenu == "Sell" ? "active" : "")">Sell Property</a>
-            <a asp-action="MyProperties" asp-controller="Property"
-               class="@(ViewBag.ActiveMenu == "MyProperties" ? "active" : "")">My Property</a>
-            <a asp-action="SavedProperties" asp-controller="Property"
-               class="@(ViewBag.ActiveMenu == "SavedProperties" ? "active" : "")">Favorites</a>
-            @if (Context.Session.GetString("Role") == "Admin")
-            {
-                <a asp-action="Index" asp-controller="Admin"
-                   class="@(ViewBag.ActiveMenu == "Admin" ? "active" : "")" style="color:var(--gold); border: 1px dashed var(--gold); border-radius: 6px; padding: 0.2rem 0.6rem; transform: scale(0.95);"><i class="fa-solid fa-shield-halved"></i> Admin</a>
-            }
-        </div>
+        @if (Context.Session.GetString("Role") != "Admin")
+        {
+            <div class="lx-nav-links">
+                <a asp-action="Index" asp-controller="Home"
+                   class="@(ViewBag.ActiveMenu == "Home" ? "active" : "")">Home</a>
+                <a asp-action="Index" asp-controller="Sell"
+                   class="@(ViewBag.ActiveMenu == "Sell" ? "active" : "")">Sell Property</a>
+                <a asp-action="MyProperties" asp-controller="Property"
+                   class="@(ViewBag.ActiveMenu == "MyProperties" ? "active" : "")">My Property</a>
+                <a asp-action="SavedProperties" asp-controller="Property"
+                   class="@(ViewBag.ActiveMenu == "SavedProperties" ? "active" : "")">Favorites</a>
+            </div>
+        }
 
         <div class="lx-nav-right">
             @if (Context.Session.GetString("UserID") != null)

@@ -1,270 +1,560 @@
-@model IEnumerable<RealEstateUser.Models.PropertyModel>
-
+@model RealEstateUser.Models.AdminDashboardViewModel
 @{
     ViewData["Title"] = "Admin Dashboard";
     Layout = "_AdminLayout";
-    var currentUserIdStr = Context.Session.GetString("UserID");
 }
 
 @section Styles {
-    <style>
-        .admin-page {
-            padding: 3rem 1.5rem;
-            min-height: calc(100vh - 60px);
-            background: radial-gradient(circle at top right, rgba(201,162,39,0.05) 0%, transparent 40%),
-                        radial-gradient(circle at bottom left, rgba(201,162,39,0.02) 0%, transparent 40%);
-        }
+<style>
+    /* ── Stitch Clone Variables ── */
+    :root {
+        --luxe-dark: #08090d;
+        --luxe-gold: #c9a227;
+        --luxe-gold-light: #e5be4f;
+        --glass-bg: rgba(20,22,28,0.7);
+        --glass-border: rgba(255,255,255,0.08);
+    }
 
-        .admin-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #08090d; }
+    ::-webkit-scrollbar-thumb { background: var(--luxe-gold); border-radius: 10px; }
 
-        .admin-title {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: -0.5px;
-            margin-bottom: 0.5rem;
-        }
+    .glass-card {
+        background: rgba(20,22,28,0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37);
+    }
 
-        .admin-sub {
-            color: #9ca3af;
-            font-size: 0.95rem;
-            letter-spacing: 0.5px;
-        }
+    .gold-gradient-text {
+        background: linear-gradient(to bottom right, #c9a227, #f3d17a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
 
-        .property-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
+    /* Section titles */
+    .section-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.3px;
+    }
 
-        /* CARD STYLE - Consistent with Home/MyProperties */
-        .pd-card {
-            background: rgba(17, 19, 24, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
-            display: flex;
-            flex-direction: column;
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
+    /* Metric cards */
+    .metric-card {
+        background: rgba(20,22,28,0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        border-radius: 16px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.3s;
+    }
+    .metric-card:hover { border-color: rgba(201,162,39,0.3); }
+    .metric-card .bg-icon {
+        position: absolute; right: -8px; bottom: -8px;
+        opacity: 0.05; color: var(--luxe-gold);
+        font-size: 5rem;
+        transition: opacity 0.3s;
+    }
+    .metric-card:hover .bg-icon { opacity: 0.1; }
+    .metric-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #6b7280; }
+    .metric-value { font-size: 2rem; font-weight: 800; color: #fff; margin-top: 0.3rem; }
+    .metric-badge { font-size: 0.7rem; font-weight: 700; color: #4ade80; }
 
-        .pd-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(201,162,39,0.3);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 20px rgba(201,162,39,0.1);
-        }
+    /* Pending approval cards */
+    .approval-card {
+        background: rgba(20,22,28,0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-left: 4px solid rgba(245,158,11,0.5);
+        border-radius: 16px;
+        padding: 1rem;
+        display: flex;
+        gap: 1.25rem;
+        align-items: flex-start;
+        transition: border-color 0.2s;
+    }
+    .approval-card:hover { border-color: rgba(201,162,39,0.4); }
+    .approval-img { width: 160px; min-width: 160px; height: 140px; border-radius: 10px; object-fit: cover; transition: transform 0.4s; }
+    .approval-card:hover .approval-img { transform: scale(1.04); }
 
-        .pd-img-wrap {
-            position: relative;
-            width: 100%;
-            height: 180px;
-            overflow: hidden;
-            background: #0a0a0a;
-        }
+    /* Table styles */
+    .admin-table { width: 100%; border-collapse: collapse; }
+    .admin-table thead tr { background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .admin-table th { padding: 1rem 1.25rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #6b7280; }
+    .admin-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.15s; }
+    .admin-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+    .admin-table td { padding: 1rem 1.25rem; font-size: 0.85rem; color: #d1d5db; vertical-align: middle; }
 
-        .pd-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
+    /* Role badges */
+    .badge-admin { background: rgba(201,162,39,0.15); color: #c9a227; border: 1px solid rgba(201,162,39,0.3); font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 999px; }
+    .badge-seller { background: rgba(168,85,247,0.15); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 999px; }
+    .badge-buyer { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 999px; }
+    .badge-available { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 4px; }
+    .badge-sold { background: rgba(107,114,128,0.2); color: #9ca3af; border: 1px solid rgba(107,114,128,0.3); font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 4px; }
+    .badge-pending { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 4px; }
+    .badge-rejected { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); font-size: 0.65rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 4px; }
 
-        .pd-card:hover .pd-img {
-            transform: scale(1.08);
-        }
+    /* Buttons */
+    .btn-approve { background: #16a34a; color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-approve:hover { background: #15803d; }
+    .btn-reject { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.4); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-reject:hover { background: rgba(239,68,68,0.2); }
+    .btn-sm-ghost { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 0.35rem 0.75rem; font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: background 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn-sm-ghost:hover { background: rgba(255,255,255,0.1); }
+    .btn-sm-danger { background: rgba(239,68,68,0.08); color: #f87171; border: 1px solid rgba(239,68,68,0.2); border-radius: 6px; padding: 0.35rem 0.75rem; font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: background 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn-sm-danger:hover { background: rgba(239,68,68,0.18); }
+    .btn-sm-view { background: rgba(201,162,39,0.08); color: var(--luxe-gold); border: 1px solid rgba(201,162,39,0.25); border-radius: 6px; padding: 0.35rem 0.75rem; font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: background 0.2s; text-transform: uppercase; letter-spacing: 0.5px; text-decoration:none; display:inline-block; }
+    .btn-sm-view:hover { background: rgba(201,162,39,0.15); color: var(--luxe-gold); }
 
-        .pd-badge-admin {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: rgba(239, 68, 68, 0.9);
-            color: #fff;
-            padding: 0.35rem 0.75rem;
-            border-radius: 8px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
-            backdrop-filter: blur(5px);
-        }
+    /* 3-dot dropdown */
+    .dots-wrapper { position: relative; display: inline-block; }
+    .dots-btn { background: none; border: none; color: #6b7280; cursor: pointer; padding: 0.3rem 0.5rem; border-radius: 6px; font-size: 1.1rem; transition: color 0.2s, background 0.2s; line-height: 1; }
+    .dots-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .dots-menu { display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #1a1d24; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; min-width: 170px; z-index: 9999; box-shadow: 0 12px 28px rgba(0,0,0,0.7); overflow: hidden; }
+    .dots-menu.open { display: block; }
+    .dots-menu.flip-up { top: auto; bottom: calc(100% + 4px); }
+    .dots-menu button, .dots-menu a { display: block; width: 100%; text-align: left; padding: 0.65rem 1rem; font-size: 0.8rem; font-weight: 600; background: none; border: none; cursor: pointer; color: #d1d5db; text-decoration: none; transition: background 0.15s; }
+    .dots-menu button:hover, .dots-menu a:hover { background: rgba(255,255,255,0.06); }
+    .dots-menu .menu-item-danger { color: #f87171; }
+    .dots-menu .menu-item-danger:hover { background: rgba(239,68,68,0.1); }
+    .dots-menu .menu-sep { height: 1px; background: rgba(255,255,255,0.07); margin: 0.25rem 0; }
 
-        .pd-badge-type {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: rgba(10, 12, 18, 0.85);
-            color: var(--gold);
-            padding: 0.35rem 0.75rem;
-            border-radius: 8px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 1px solid rgba(201,162,39,0.3);
-            backdrop-filter: blur(5px);
-        }
+    /* Activity feed */
+    .activity-item { display: flex; align-items: flex-start; gap: 1rem; padding: 0.75rem; border-left: 2px solid rgba(201,162,39,0.25); border-radius: 0 8px 8px 0; background: rgba(255,255,255,0.02); margin-bottom: 0.75rem; }
+    .activity-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.75rem; }
 
-        .pd-body {
-            padding: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
+    /* Section nav anchors (smooth scroll) */
+    html { scroll-behavior: smooth; }
+    .section-anchor { scroll-margin-top: 80px; }
 
-        /* Buttons matching the theme */
-        .btn-approve {
-            background: linear-gradient(135deg, rgba(74,222,128,0.9), rgba(22,163,74,0.9));
-            color: #064e3b;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px;
-            padding: 0.75rem;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-        }
+    /* Feedback card */
+    .feedback-card { background: rgba(20,22,28,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.25rem; position: relative; margin-bottom: 1rem; }
 
-        .btn-approve:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(74,222,128,0.3);
-        }
-
-        .btn-reject {
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 10px;
-            padding: 0.75rem;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-        }
-
-        .btn-reject:hover {
-            background: rgba(239, 68, 68, 0.25);
-            color: #fca5a5;
-        }
-    </style>
+    /* Toast notifications */
+    .toast-msg { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; background: rgba(20,22,28,0.95); border: 1px solid rgba(74,222,128,0.4); color: #4ade80; padding: 1rem 1.5rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+</style>
 }
 
-<div class="admin-page container">
-    <div class="admin-header">
-        <h1 class="admin-title">Admin Moderation</h1>
-        <p class="admin-sub">Approve or reject pending properties before they go live on the market.</p>
-    </div>
+<main style="padding: 6rem 2rem 3rem; max-width: 1500px; margin: 0 auto;">
 
+    <!-- Toast Notifications -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div style="background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.3); color:#4ade80; padding:1rem; border-radius:12px; text-align:center; font-weight:600; margin-bottom:1.5rem;">
-            <i class="fa-solid fa-circle-check me-2"></i> @TempData["SuccessMessage"]
-        </div>
+        <div class="toast-msg" id="toastMsg"><i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]</div>
     }
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:1rem; border-radius:12px; text-align:center; font-weight:600; margin-bottom:1.5rem;">
-            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["ErrorMessage"]
+    <!-- ───────────────────────────────── -->
+    <!-- SECTION 1: PLATFORM OVERVIEW     -->
+    <!-- ───────────────────────────────── -->
+    <section class="section-anchor mb-5" id="overview">
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:1.5rem;">
+            <h2 class="section-title">Platform Overview</h2>
+            <span style="font-size:0.75rem; color:#6b7280; font-style:italic;">Live from Database</span>
         </div>
-    }
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:1.25rem;">
+            <!-- Total Users -->
+            <div class="metric-card">
+                <i class="fa-solid fa-users bg-icon"></i>
+                <div class="metric-label">Total Users</div>
+                <div class="metric-value">@Model.Stats.TotalUsers</div>
+            </div>
+            <!-- Active Properties -->
+            <div class="metric-card">
+                <i class="fa-solid fa-house bg-icon"></i>
+                <div class="metric-label">Active Properties</div>
+                <div class="metric-value">@Model.Stats.ActiveProperties</div>
+            </div>
+            <!-- Pending Approvals -->
+            <div class="metric-card">
+                <i class="fa-solid fa-hourglass-half bg-icon"></i>
+                <div class="metric-label">Pending Approvals</div>
+                <div class="metric-value" style="color:#fbbf24;">@Model.Stats.PendingApprovals</div>
+                <div class="metric-badge" style="color:#fbbf24;">Needs Review</div>
+            </div>
+            <!-- Total Transactions -->
+            <div class="metric-card">
+                <i class="fa-solid fa-dollar-sign bg-icon"></i>
+                <div class="metric-label">Total Transactions</div>
+                <div class="metric-value">@Model.Stats.TotalTransactions</div>
+            </div>
+        </div>
 
-    @if (Model != null && Model.Any())
-    {
-        <div class="property-grid">
-            @foreach (var property in Model)
+        <!-- Recent Activity Feed -->
+        <div class="glass-card mt-4" style="border-radius:16px; padding:1.5rem;">
+            <h3 style="font-size:1rem; font-weight:700; color:#fff; margin-bottom:1.25rem;">
+                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--luxe-gold); margin-right:0.5rem;"></span>
+                Recent Activity Feed
+            </h3>
+
+            @if (Model.RecentProperties.Any())
             {
-                <div class="pd-card">
-                    <!-- Image Area -->
-                    <div class="pd-img-wrap" onclick="window.location.href='@Url.Action("PropertyDetail", "Home", new { id = property.PropertyID })'" style="cursor:pointer;">
-                        <img src="@property.ImageUrl" alt="@property.Title" class="pd-img" onerror="this.src='/images/placeholder.jpg';" />
-                        <div class="pd-badge-type">
-                            @property.Type
+                @foreach (var item in Model.RecentProperties)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background:rgba(201,162,39,0.1); color:var(--luxe-gold);">
+                            <i class="fa-solid fa-house"></i>
                         </div>
-                        <div class="pd-badge-admin">
-                            <i class="fa-solid fa-hourglass-half"></i> Pending Approval
-                        </div>
-                    </div>
-
-                    <!-- Body Area -->
-                    <div class="pd-body">
-                        <!-- Title & Price row -->
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;gap:0.5rem;">
-                            <h5 style="font-size:0.95rem;font-weight:700;color:#f3f4f6;margin:0;line-height:1.4;">
-                                @property.Title
-                            </h5>
-                            <span style="font-size:1rem;font-weight:700;color:#c9a227;white-space:nowrap;flex-shrink:0;">
-                                $@(property.Price.ToString("N0"))
-                            </span>
-                        </div>
-
-                        <!-- Location -->
-                        <p style="font-size:0.8rem;color:#9ca3af;margin:0 0 1rem;display:flex;align-items:center;gap:0.4rem;">
-                            <i class="fa-solid fa-location-dot" style="color:#c9a227;font-size:0.7rem;"></i>
-                            @property.Location
-                        </p>
-
-                        <!-- Seller Info -->
-                        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:0.8rem; margin-bottom:1.5rem;">
-                            <div style="font-size:0.7rem; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:0.3rem;">Seller</div>
-                            <div style="font-size:0.85rem; color:#d1d5db; font-weight:600; margin-bottom:0.15rem;">
-                                <i class="fa-regular fa-user me-2"></i> @property.CreatedBy
-                            </div>
-                            <div style="font-size:0.85rem; color:#9ca3af;">
-                                <i class="fa-solid fa-phone me-2"></i> @(string.IsNullOrEmpty(property.SellerPhone) ? "No Phone Provided" : property.SellerPhone)
-                            </div>
-                        </div>
-
-                        <!-- Admin Actions -->
-                        <div class="mt-auto pt-3 d-flex gap-2" style="border-top:1px solid rgba(255,255,255,0.08);">
-                            <form asp-action="ApproveProperty" asp-controller="Admin" method="post" class="w-100">
-                                <input type="hidden" name="id" value="@property.PropertyID" />
-                                <button type="submit" class="btn-approve w-100">
-                                    <i class="fa-solid fa-check"></i> Approve
-                                </button>
-                            </form>
-                            <form asp-action="RejectProperty" asp-controller="Admin" method="post" class="w-100">
-                                <input type="hidden" name="id" value="@property.PropertyID" />
-                                <button type="submit" class="btn-reject w-100" onclick="return confirm('Are you sure you want to reject this listing?');">
-                                    <i class="fa-solid fa-xmark"></i> Reject
-                                </button>
-                            </form>
+                        <div>
+                            <p style="font-size:0.85rem; color:#d1d5db; margin:0;">New property listed: <strong style="color:#fff;">@item.Name</strong></p>
+                            <span style="font-size:0.7rem; color:#6b7280; text-transform:uppercase; letter-spacing:1px;">Status: @item.Detail</span>
                         </div>
                     </div>
-                </div>
+                }
+            }
+            @if (Model.RecentUsers.Any())
+            {
+                @foreach (var item in Model.RecentUsers)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background:rgba(99,102,241,0.1); color:#818cf8;">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <p style="font-size:0.85rem; color:#d1d5db; margin:0;">New user joined: <strong style="color:#fff;">@item.Name</strong></p>
+                            <span style="font-size:0.7rem; color:#6b7280; text-transform:uppercase; letter-spacing:1px;">Role: @item.Detail</span>
+                        </div>
+                    </div>
+                }
+            }
+            @if (!Model.RecentProperties.Any() && !Model.RecentUsers.Any())
+            {
+                <p style="color:#6b7280; text-align:center; font-size:0.85rem;">No recent activity found.</p>
             }
         </div>
-    }
-    else
-    {
-        <div style="text-align:center; padding:5rem 2rem; background:rgba(17,19,24,0.4); border:1px dashed rgba(255,255,255,0.1); border-radius:24px; max-width:600px; margin:0 auto;">
-            <div style="width:80px;height:80px;background:rgba(201,162,39,0.1);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:1.5rem;">
-                <i class="fa-solid fa-shield-halved fa-2x" style="color:#c9a227;"></i>
-            </div>
-            <h3 style="color:#fff;font-weight:700;margin-bottom:0.5rem;">All Caught Up!</h3>
-            <p style="color:#9ca3af;font-size:0.95rem;margin:0;">There are no new properties pending approval. The marketplace is running smoothly.</p>
+    </section>
+
+    <!-- ───────────────────────────────── -->
+    <!-- SECTION 2: PENDING APPROVALS     -->
+    <!-- ───────────────────────────────── -->
+    <section class="section-anchor mb-5" id="moderation">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+            <h2 class="section-title">Pending Property Approvals</h2>
+            <span style="font-size:0.75rem; color:#fbbf24; font-weight:700; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); padding:0.3rem 0.75rem; border-radius:999px;">
+                @Model.PendingProperties.Count Awaiting Review
+            </span>
         </div>
+
+        @if (Model.PendingProperties.Any())
+        {
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(460px,1fr)); gap:1.25rem;">
+                @foreach (var p in Model.PendingProperties)
+                {
+                    <div class="approval-card" style="flex-direction:column; padding:0; overflow:hidden;">
+                        <!-- Image on top (full width, Stitch-style) -->
+                        <div style="width:100%; height:190px; overflow:hidden; position:relative;">
+                            <img src="@p.ImageUrl" alt="@p.Title" style="width:100%; height:100%; object-fit:cover; transition:transform 0.5s;" onerror="this.src='/images/placeholder.jpg';" />
+                            <span class="badge-pending" style="position:absolute; top:12px; right:12px;">PENDING</span>
+                        </div>
+                        <!-- Content below image -->
+                        <div style="padding:1.1rem 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.5rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <h4 style="font-size:1rem; font-weight:700; color:#fff; margin:0; line-height:1.3;">@p.Title</h4>
+                            </div>
+                            <p style="font-size:0.8rem; color:#6b7280; margin:0;"><i class="fa-solid fa-location-dot me-1"></i>@p.Location</p>
+                            <p style="font-size:1.25rem; font-weight:800; color:var(--luxe-gold); margin:0.2rem 0;">$@p.Price.ToString("N0")</p>
+                            <!-- Seller info -->
+                            <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:#9ca3af; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.06);">
+                                <div style="width:26px; height:26px; border-radius:50%; background:rgba(201,162,39,0.1); border:1px solid rgba(201,162,39,0.2); display:flex; align-items:center; justify-content:center; color:var(--luxe-gold); font-size:0.7rem; flex-shrink:0;">
+                                    @(string.IsNullOrEmpty(p.CreatedBy) ? "?" : p.CreatedBy.Substring(0, 1).ToUpper())
+                                </div>
+                                <span>Seller: <strong style="color:#d1d5db;">@p.CreatedBy</strong></span>
+                                <span style="margin-left:auto;"><i class="fa-solid fa-phone me-1"></i>@(string.IsNullOrEmpty(p.SellerPhone) ? "N/A" : p.SellerPhone)</span>
+                            </div>
+                            <!-- Action buttons -->
+                            <div style="display:flex; gap:0.6rem; margin-top:0.5rem;">
+                                <form asp-action="ApproveProperty" method="post" style="flex:1;">
+                                    <input type="hidden" name="id" value="@p.PropertyID" />
+                                    <button type="submit" class="btn-approve w-100"><i class="fa-solid fa-check me-1"></i>Approve</button>
+                                </form>
+                                <form asp-action="RejectProperty" method="post" style="flex:1;" onsubmit="return promptReject(this);">
+                                    <input type="hidden" name="id" value="@p.PropertyID" />
+                                    <input type="hidden" name="reason" class="reject-reason" value="" />
+                                    <button type="submit" class="btn-reject w-100"><i class="fa-solid fa-xmark me-1"></i>Reject</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="glass-card" style="border-radius:16px; padding:3rem; text-align:center;">
+                <i class="fa-solid fa-shield-halved fa-2x" style="color:var(--luxe-gold); opacity:0.5; margin-bottom:1rem; display:block;"></i>
+                <p style="color:#6b7280; font-size:0.9rem; margin:0;">No pending properties. The marketplace is clean!</p>
+            </div>
+        }
+    </section>
+
+    <!-- ───────────────────────────────── -->
+    <!-- SECTION 3: USER MANAGEMENT       -->
+    <!-- ───────────────────────────────── -->
+    <section class="section-anchor mb-5" id="users">
+        <div style="margin-bottom:1.5rem;">
+            <h2 class="section-title">User Management</h2>
+        </div>
+        <div class="glass-card" style="border-radius:16px; overflow:visible;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Name</th>
+                        <th>Contact Details</th>
+                        <th style="text-align:center;">Role</th>
+                        <th style="text-align:right; padding-right:1.5rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.AllUsers)
+                    {
+                        <tr>
+                            <td style="font-family:monospace; font-size:0.75rem; color:#6b7280;">#@user.UserID</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                    <div style="width:36px; height:36px; border-radius:50%; background:rgba(201,162,39,0.1); border:1px solid rgba(201,162,39,0.2); display:flex; align-items:center; justify-content:center; color:var(--luxe-gold); font-size:0.85rem; flex-shrink:0;">
+                                        @user.UserName.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:700; color:#fff;">@user.UserName</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="font-size:0.8rem;">@user.Email</div>
+                                <div style="font-size:0.75rem; color:#6b7280;">@(string.IsNullOrEmpty(user.PhoneNo) ? "No Phone" : user.PhoneNo)</div>
+                            </td>
+                            <td style="text-align:center;">
+                                @if (user.Role == "Admin")
+                                {
+                                    <span class="badge-admin">@user.Role</span>
+                                }
+                                else if (user.Role == "Seller")
+                                {
+                                    <span class="badge-seller">@user.Role</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-buyer">@user.Role</span>
+                                }
+                            </td>
+                            <td style="text-align:right; padding-right:1.25rem;">
+                                @if (user.Role != "Admin")
+                                {
+                                    <div class="dots-wrapper">
+                                        <button class="dots-btn" onclick="toggleMenu(this)" title="Actions">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                        <div class="dots-menu">
+                                            <!-- Switch to Seller -->
+                                            <form asp-action="UpdateRole" method="post">
+                                                <input type="hidden" name="userId" value="@user.UserID" />
+                                                <input type="hidden" name="newRole" value="Seller" />
+                                                <button type="submit"><i class="fa-solid fa-briefcase me-2" style="color:#a855f7;"></i>Make Seller</button>
+                                            </form>
+                                            <!-- Switch to Buyer -->
+                                            <form asp-action="UpdateRole" method="post">
+                                                <input type="hidden" name="userId" value="@user.UserID" />
+                                                <input type="hidden" name="newRole" value="Buyer" />
+                                                <button type="submit"><i class="fa-solid fa-user me-2" style="color:#60a5fa;"></i>Make Buyer</button>
+                                            </form>
+                                            <div class="menu-sep"></div>
+                                            <!-- Remove User -->
+                                            <form asp-action="DeleteUser" method="post" onsubmit="return confirm('Remove user @user.UserName?')">
+                                                <input type="hidden" name="userId" value="@user.UserID" />
+                                                <button type="submit" class="menu-item-danger"><i class="fa-solid fa-trash me-2"></i>Remove User</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span style="font-size:0.7rem; color:#6b7280;">Super Admin</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.AllUsers.Any())
+                    {
+                        <tr><td colspan="5" style="text-align:center; color:#6b7280; padding:2rem;">No users found.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ───────────────────────────────── -->
+    <!-- SECTION 4: PROPERTY INVENTORY    -->
+    <!-- ───────────────────────────────── -->
+    <section class="section-anchor mb-5" id="inventory">
+        <div style="margin-bottom:1.5rem;">
+            <h2 class="section-title">Global Property Inventory</h2>
+        </div>
+        <div class="glass-card" style="border-radius:16px; overflow:hidden; overflow-x:auto;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Listing</th>
+                        <th>Location</th>
+                        <th>Value</th>
+                        <th style="text-align:center;">Status</th>
+                        <th style="text-align:right; padding-right:1.5rem;">Management</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var prop in Model.AllProperties)
+                    {
+                        <tr>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                    <div style="width:44px; height:44px; border-radius:8px; overflow:hidden; flex-shrink:0; background:#111;">
+                                        <img src="@prop.ImageUrl" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/images/placeholder.jpg';" />
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:700; color:#fff;">@prop.Title</div>
+                                        <div style="font-size:0.7rem; color:#6b7280;">@prop.Type</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-style:italic; color:#9ca3af; font-size:0.8rem;">@prop.Location</td>
+                            <td style="font-weight:700; color:var(--luxe-gold);">$@prop.Price.ToString("N0")</td>
+                            <td style="text-align:center;">
+                                @{
+                                    var s = prop.Status?.ToLower() ?? "";
+                                    if (!prop.IsApproved) { <text><span class="badge-pending">Pending</span></text> }
+                                    else if (s.Contains("sold")) { <text><span class="badge-sold">Sold</span></text> }
+                                    else if (s.Contains("reject")) { <text><span class="badge-rejected">Rejected</span></text> }
+                                    else { <text><span class="badge-available">Available</span></text> }
+                                }
+                            </td>
+                            <td style="text-align:right; padding-right:1.25rem;">
+                                <a asp-controller="Home" asp-action="PropertyDetail" asp-route-id="@prop.PropertyID" class="btn-sm-view">View</a>
+                                &nbsp;
+                                <form asp-action="DeleteProperty" method="post" style="display:inline;" onsubmit="return confirm('Permanently delete this listing?')">
+                                    <input type="hidden" name="id" value="@prop.PropertyID" />
+                                    <button type="submit" class="btn-sm-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.AllProperties.Any())
+                    {
+                        <tr><td colspan="5" style="text-align:center; color:#6b7280; padding:2rem;">No properties found.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ───────────────────────────────── -->
+    <!-- SECTION 5: FEEDBACK MODERATION   -->
+    <!-- ───────────────────────────────── -->
+    <section class="section-anchor mb-5" id="feedback">
+        <div style="margin-bottom:1.5rem;">
+            <h2 class="section-title">Feedback Moderation</h2>
+        </div>
+
+        @if (Model.AllFeedback.Any())
+        {
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(420px,1fr)); gap:1.25rem;">
+                @foreach (var fb in Model.AllFeedback)
+                {
+                    <div class="feedback-card">
+                        <!-- Delete Button -->
+                        <form asp-action="DeleteFeedback" method="post" style="position:absolute; top:1rem; right:1rem;" onsubmit="return confirm('Delete this review?')">
+                            <input type="hidden" name="id" value="@fb.FeedbackID" />
+                            <button type="submit" style="background:none; border:none; color:#6b7280; cursor:pointer; transition:color 0.2s; font-size:1rem;" title="Delete Review">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </form>
+                        <!-- Reviewer -->
+                        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                            <div style="width:36px; height:36px; border-radius:50%; background:rgba(201,162,39,0.1); border:1px solid rgba(201,162,39,0.2); display:flex; align-items:center; justify-content:center; color:var(--luxe-gold); font-size:0.85rem;">
+                                @fb.ReviewerName.Substring(0, 1).ToUpper()
+                            </div>
+                            <div>
+                                <div style="font-weight:700; color:#fff; font-size:0.85rem;">@fb.ReviewerName</div>
+                            </div>
+                        </div>
+                        <!-- Review text -->
+                        <p style="font-size:0.85rem; color:#d1d5db; line-height:1.6; font-style:italic; margin:0 0 1rem;">"@fb.Description"</p>
+                        <!-- Property link -->
+                        <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:0.75rem;">
+                            <span style="font-size:0.65rem; color:#6b7280; text-transform:uppercase; letter-spacing:1px; font-weight:700;">Regarding Property:</span>
+                            <div style="font-size:0.8rem; font-weight:700; color:#fff; margin-top:0.2rem;">@fb.PropertyTitle</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="glass-card" style="border-radius:16px; padding:3rem; text-align:center;">
+                <i class="fa-regular fa-comments fa-2x" style="color:var(--luxe-gold); opacity:0.5; margin-bottom:1rem; display:block;"></i>
+                <p style="color:#6b7280; font-size:0.9rem; margin:0;">No reviews on the platform yet.</p>
+            </div>
+        }
+    </section>
+
+    <!-- Footer -->
+    <footer style="text-align:center; margin-top:2rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:1.5rem;">
+        <p style="font-size:0.65rem; color:#374151; text-transform:uppercase; letter-spacing:2px;">© @DateTime.Now.Year Lumina Luxe International Admin Center · Encrypted Session Active</p>
+    </footer>
+
+</main>
+
+@section Scripts {
+<script>
+    function promptReject(form) {
+        var reason = prompt("Enter a reason for rejecting this property (optional):");
+        if (reason === null) {
+            return false; // User cancelled prompt
+        }
+        form.querySelector('.reject-reason').value = reason;
+        return true;
     }
-</div>
+
+    // Auto-dismiss toast after 4s
+    setTimeout(function () {
+        var t = document.getElementById('toastMsg');
+        if (t) t.style.display = 'none';
+    }, 4000);
+
+    // 3-dot dropdown toggle — flips up if near bottom of viewport
+    function toggleMenu(btn) {
+        var menu = btn.nextElementSibling;
+        var isOpen = menu.classList.contains('open');
+
+        // Close all open menus first
+        document.querySelectorAll('.dots-menu.open').forEach(function(m) {
+            m.classList.remove('open', 'flip-up');
+        });
+
+        if (!isOpen) {
+            var btnRect = btn.getBoundingClientRect();
+            var spaceBelow = window.innerHeight - btnRect.bottom;
+
+            // Reset flip class, then decide direction
+            menu.classList.remove('flip-up');
+            if (spaceBelow < 160) {
+                // Not enough room below — open upward
+                menu.classList.add('flip-up');
+            }
+            menu.classList.add('open');
+        }
+    }
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dots-wrapper')) {
+            document.querySelectorAll('.dots-menu.open').forEach(function(m) {
+                m.classList.remove('open', 'flip-up');
+            });
+        }
+    });
+</script>
+}

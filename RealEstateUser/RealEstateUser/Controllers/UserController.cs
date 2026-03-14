@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -116,16 +116,15 @@ namespace RealEstateUser.Controllers
 
             if (response.IsSuccessStatusCode)
             {
-                // Update local session so UI changes (like Navbar's Sell button) take effect immediately without requiring re-login
                 HttpContext.Session.SetString("UserName", model.UserName);
                 HttpContext.Session.SetString("UserEmail", model.Email);
                 HttpContext.Session.SetString("Role", model.Role);
-                
                 return RedirectToAction("UserProfile");
             }
             else
             {
-                ViewBag.ErrorMessage = "Failed to update user details.";
+                var errorBody = await response.Content.ReadAsStringAsync();
+                ViewBag.ErrorMessage = $"Failed to update user details. [{(int)response.StatusCode}] {errorBody}";
                 return View("UserProfile", model);
             }
         }

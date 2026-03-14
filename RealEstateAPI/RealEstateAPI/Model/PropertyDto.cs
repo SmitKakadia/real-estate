@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 
 namespace RealEstateAPI.Model
 {
@@ -12,7 +12,7 @@ namespace RealEstateAPI.Model
         public int UserID { get; set; }
         public string Type { get; set; }
         public string Status { get; set; }
-        public string ImageUrl { get; set; } // Existing image URL for reselling
+        public string? ImageUrl { get; set; } // Existing image URL for reselling
         public IFormFile? Image { get; set; } // Main property cover Image (nullable for resell)
         public List<string> ExistingAdditionalImages { get; set; } = new List<string>();
         public List<IFormFile> AdditionalImages { get; set; } = new List<IFormFile>();

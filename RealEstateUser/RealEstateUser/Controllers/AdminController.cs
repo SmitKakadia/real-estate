@@ -10,94 +10,134 @@ namespace RealEstateUser.Controllers
     public class AdminController : Controller
     {
         private readonly HttpClient _client;
-        private readonly string apiUrl = "http://localhost:5127/api/Property"; 
+        private readonly string apiUrl = "http://localhost:5127/api/Admin";
 
         public AdminController(IHttpClientFactory httpClientFactory)
         {
             _client = httpClientFactory.CreateClient();
         }
 
-        // Dashboard displaying pending properties
+        private bool IsAdmin()
+        {
+            var role = HttpContext.Session.GetString("Role");
+            var token = HttpContext.Session.GetString("AuthToken");
+            return role == "Admin" && !string.IsNullOrEmpty(token);
+        }
+
+        private void SetAuthHeader()
+        {
+            var token = HttpContext.Session.GetString("AuthToken");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+
         public async Task<IActionResult> Index()
         {
             ViewBag.ActiveMenu = "Admin";
+            if (!IsAdmin()) return RedirectToAction("Login", "Auth");
 
-            string role = HttpContext.Session.GetString("Role");
-            if (role != "Admin")
+            SetAuthHeader();
+
+            var vm = new AdminDashboardViewModel();
+
+            // Stats
+            var statsResp = await _client.GetAsync($"{apiUrl}/stats");
+            if (statsResp.IsSuccessStatusCode)
+                vm.Stats = JsonConvert.DeserializeObject<AdminStatsModel>(await statsResp.Content.ReadAsStringAsync());
+
+            // Activity
+            var actResp = await _client.GetAsync($"{apiUrl}/activity");
+            if (actResp.IsSuccessStatusCode)
             {
-                return RedirectToAction("Index", "Home");
+                dynamic act = JsonConvert.DeserializeObject<dynamic>(await actResp.Content.ReadAsStringAsync());
+                vm.RecentProperties = JsonConvert.DeserializeObject<List<ActivityItemModel>>(act.recentProperties.ToString());
+                vm.RecentUsers = JsonConvert.DeserializeObject<List<ActivityItemModel>>(act.recentUsers.ToString());
             }
 
-            string token = HttpContext.Session.GetString("AuthToken");
-            if (string.IsNullOrEmpty(token))
-            {
-                return RedirectToAction("Login", "Auth");
-            }
+            // Pending Approvals
+            var pendingResp = await _client.GetAsync($"{apiUrl.Replace("Admin", "Property")}/unapproved");
+            if (pendingResp.IsSuccessStatusCode)
+                vm.PendingProperties = JsonConvert.DeserializeObject<List<PropertyModel>>(await pendingResp.Content.ReadAsStringAsync());
 
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await _client.GetAsync($"{apiUrl}/unapproved");
+            // All Users
+            var usersResp = await _client.GetAsync($"{apiUrl}/users");
+            if (usersResp.IsSuccessStatusCode)
+                vm.AllUsers = JsonConvert.DeserializeObject<List<AdminUserModel>>(await usersResp.Content.ReadAsStringAsync());
 
-            List<PropertyModel> properties = new List<PropertyModel>();
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                properties = JsonConvert.DeserializeObject<List<PropertyModel>>(jsonResponse);
-            }
-            else
-            {
-                ViewBag.ErrorMessage = "Failed to load pending properties for approval.";
-            }
+            // All Properties
+            var propsResp = await _client.GetAsync($"{apiUrl}/all-properties");
+            if (propsResp.IsSuccessStatusCode)
+                vm.AllProperties = JsonConvert.DeserializeObject<List<AdminPropertyModel>>(await propsResp.Content.ReadAsStringAsync());
 
-            return View(properties);
+            // All Feedback
+            var fbResp = await _client.GetAsync($"{apiUrl}/feedback");
+            if (fbResp.IsSuccessStatusCode)
+                vm.AllFeedback = JsonConvert.DeserializeObject<List<AdminFeedbackModel>>(await fbResp.Content.ReadAsStringAsync());
+
+            return View(vm);
         }
 
-        // Approve Property
         [HttpPost]
         public async Task<IActionResult> ApproveProperty(int id)
         {
-            string token = HttpContext.Session.GetString("AuthToken");
-            if (string.IsNullOrEmpty(token) || HttpContext.Session.GetString("Role") != "Admin")
-            {
-                return Unauthorized();
-            }
-
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await _client.PutAsync($"{apiUrl}/approve/{id}", null);
-
-            if (response.IsSuccessStatusCode)
-            {
-                TempData["SuccessMessage"] = "Property approved and listed on Home page.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Failed to approve property.";
-            }
-
+            if (!IsAdmin()) return Unauthorized();
+            SetAuthHeader();
+            await _client.PutAsync($"{apiUrl}/approve/{id}", null);
+            TempData["SuccessMessage"] = "Property approved and is now live!";
             return RedirectToAction("Index");
         }
 
-        // Reject Property
         [HttpPost]
-        public async Task<IActionResult> RejectProperty(int id)
+        public async Task<IActionResult> RejectProperty(int id, string reason)
         {
-            string token = HttpContext.Session.GetString("AuthToken");
-            if (string.IsNullOrEmpty(token) || HttpContext.Session.GetString("Role") != "Admin")
-            {
-                return Unauthorized();
-            }
+            if (!IsAdmin()) return Unauthorized();
+            SetAuthHeader();
+            var payload = new StringContent(
+                Newtonsoft.Json.JsonConvert.SerializeObject(reason ?? "No reason provided."),
+                System.Text.Encoding.UTF8, "application/json");
+            await _client.PutAsync($"{apiUrl}/reject/{id}", payload);
+            TempData["SuccessMessage"] = "Property rejected.";
+            return RedirectToAction("Index");
+        }
 
-            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            HttpResponseMessage response = await _client.PutAsync($"{apiUrl}/reject/{id}", null);
+        [HttpPost]
+        public async Task<IActionResult> DeleteProperty(int id)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            SetAuthHeader();
+            await _client.DeleteAsync($"{apiUrl}/property/{id}");
+            TempData["SuccessMessage"] = "Property deleted.";
+            return RedirectToAction("Index");
+        }
 
-            if (response.IsSuccessStatusCode)
-            {
-                TempData["SuccessMessage"] = "Property rejected. The user will be notified in My Properties.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Failed to reject property.";
-            }
+        [HttpPost]
+        public async Task<IActionResult> DeleteFeedback(int id)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            SetAuthHeader();
+            await _client.DeleteAsync($"{apiUrl}/feedback/{id}");
+            TempData["SuccessMessage"] = "Review deleted.";
+            return RedirectToAction("Index");
+        }
 
+        [HttpPost]
+        public async Task<IActionResult> UpdateRole(int userId, string newRole)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            SetAuthHeader();
+            var payload = new StringContent(
+                Newtonsoft.Json.JsonConvert.SerializeObject(new { UserID = userId, NewRole = newRole }),
+                System.Text.Encoding.UTF8, "application/json");
+            await _client.PutAsync($"{apiUrl}/update-role", payload);
+            TempData["SuccessMessage"] = $"User role updated to {newRole}.";
+            return RedirectToAction("Index");
+        }
+        [HttpPost]
+        public async Task<IActionResult> DeleteUser(int userId)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            SetAuthHeader();
+            await _client.DeleteAsync($"http://localhost:5127/api/User/{userId}");
+            TempData["SuccessMessage"] = "User removed.";
             return RedirectToAction("Index");
         }
     }

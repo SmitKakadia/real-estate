@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using RealEstateAPI.Model;
 
 namespace RealEstateAPI.Validators
@@ -42,8 +42,8 @@ namespace RealEstateAPI.Validators
             RuleFor(user => user.Role)
                 .NotEmpty()
                 .WithMessage("Role is required.")
-                .Must(role => new[] { "Buyer", "Seller"}.Contains(role))
-                .WithMessage("Role must be one of the following: Buyer, Seller.");
+                .Must(role => new[] { "Buyer", "Seller", "Admin" }.Contains(role))
+                .WithMessage("Role must be one of the following: Buyer, Seller, Admin.");
 
         }
 

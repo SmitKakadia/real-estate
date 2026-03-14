@@ -1,4 +1,4 @@
-﻿@model RealEstateUser.Models.PropertyDto
+@model RealEstateUser.Models.PropertyDto
 
 @{
     ViewData["Title"] = "List a Property";
@@ -203,7 +203,7 @@
         }
 
         @* ✅ PRESERVED: form with all original asp-action, method, enctype, asp-controller *@
-        <form asp-action="Index" method="post" enctype="multipart/form-data" asp-controller="Sell">
+        <form id="sellForm" asp-action="Index" method="post" enctype="multipart/form-data" asp-controller="Sell">
 
             @* ✅ PRESERVED: hidden Status field *@
             <input asp-for="Status" type="hidden" value="Pending" />
@@ -336,7 +336,10 @@
                 </label>
                 @* Use basic name attribute to avoid strict client-side validation since these are optional/handled separately when reselling *@
                 <input name="AdditionalImages" type="file" class="lx-input"
-                       id="additionalImagesUpload" multiple accept="image/*" />
+                       id="additionalImagesUpload" multiple accept="image/*" onchange="previewAdditionalImages(event)" />
+                
+                <!-- New preview container for additional images -->
+                <div id="additionalImagesPreviewContainer" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;"></div>
                 
                 @if (Model.ExistingAdditionalImages != null && Model.ExistingAdditionalImages.Count > 0)
                 {
@@ -370,7 +373,7 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
-        /* ✅ PRESERVED: previewImage function — exact same logic */
+        /* Cover Image Preview logic */
         function previewImage(event) {
             const input = event.target;
             const preview = document.getElementById('imagePreview');
@@ -389,5 +392,103 @@
                 placeholder.style.display = 'block';
             }
         }
+
+        // Multiple images preview logic
+        let additionalFiles = [];
+        
+        function previewAdditionalImages(event) {
+            const input = event.target;
+            const container = document.getElementById('additionalImagesPreviewContainer');
+            
+            // Empty the container and reset our array
+            container.innerHTML = '';
+            additionalFiles = Array.from(input.files);
+            
+            additionalFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.position = 'relative';
+                    wrapper.style.width = '100px';
+                    wrapper.style.height = '100px';
+                    wrapper.style.borderRadius = '8px';
+                    wrapper.style.overflow = 'hidden';
+                    wrapper.style.border = '1px solid #1f2230';
+                    wrapper.style.flexShrink = '0';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    removeBtn.style.position = 'absolute';
+                    removeBtn.style.top = '4px';
+                    removeBtn.style.right = '4px';
+                    removeBtn.style.background = 'rgba(239,68,68,0.9)';
+                    removeBtn.style.color = '#fff';
+                    removeBtn.style.border = 'none';
+                    removeBtn.style.borderRadius = '50%';
+                    removeBtn.style.width = '24px';
+                    removeBtn.style.height = '24px';
+                    removeBtn.style.display = 'flex';
+                    removeBtn.style.alignItems = 'center';
+                    removeBtn.style.justifyContent = 'center';
+                    removeBtn.style.cursor = 'pointer';
+                    removeBtn.style.fontSize = '0.7rem';
+                    
+                    removeBtn.onclick = function() {
+                        removeAdditionalImage(index);
+                    };
+                    
+                    wrapper.appendChild(img);
+                    wrapper.appendChild(removeBtn);
+                    container.appendChild(wrapper);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function removeAdditionalImage(indexToRemove) {
+            additionalFiles.splice(indexToRemove, 1);
+            
+            // Update the file input using DataTransfer
+            const dataTransfer = new DataTransfer();
+            additionalFiles.forEach(file => dataTransfer.items.add(file));
+            document.getElementById('additionalImagesUpload').files = dataTransfer.files;
+            
+            // Re-render previews
+            document.getElementById('additionalImagesUpload').dispatchEvent(new Event('change'));
+        }
+
+        // File size validation to prevent Cloudinary crashes
+        document.getElementById('sellForm').addEventListener('submit', function(e) {
+            const maxFileSize = 10 * 1024 * 1024; // 10MB
+            
+            // Check main image
+            const mainImg = document.getElementById('imageUpload');
+            if (mainImg && mainImg.files.length > 0) {
+                if (mainImg.files[0].size > maxFileSize) {
+                    alert('The cover image is too large. Maximum allowed size is 10MB.');
+                    e.preventDefault();
+                    return;
+                }
+            }
+
+            // Check additional images
+            const addImgs = document.getElementById('additionalImagesUpload');
+            if (addImgs && addImgs.files.length > 0) {
+                for(let i=0; i<addImgs.files.length; i++) {
+                    if(addImgs.files[i].size > maxFileSize) {
+                        alert('One or more additional images are too large. Maximum allowed size per image is 10MB.');
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
+        });
     </script>
 }

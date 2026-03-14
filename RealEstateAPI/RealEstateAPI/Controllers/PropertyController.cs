@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RealEstateAPI.Data;
@@ -59,9 +59,9 @@ namespace RealEstateAPI.Controllers
         }
 
         [HttpPut("reject/{propertyID}")]
-        public IActionResult RejectProperty(int propertyID)
+        public IActionResult RejectProperty(int propertyID, [FromBody] string reason)
         {
-            if (_propertyRepository.RejectProperty(propertyID))
+            if (_propertyRepository.RejectProperty(propertyID, reason))
             {
                 return Ok(new { message = "Property rejected successfully." });
             }
@@ -89,6 +89,16 @@ namespace RealEstateAPI.Controllers
             if (propertyDto == null || (propertyDto.Image == null && string.IsNullOrEmpty(propertyDto.ImageUrl)))
             {
                 return BadRequest("Invalid property data or missing image.");
+            }
+
+            long maxFileSize = 10 * 1024 * 1024; // 10MB
+            if (propertyDto.Image != null && propertyDto.Image.Length > maxFileSize)
+            {
+                return BadRequest("The main image exceeds the 10MB size limit.");
+            }
+            if (propertyDto.AdditionalImages != null && propertyDto.AdditionalImages.Any(f => f.Length > maxFileSize))
+            {
+                return BadRequest("One or more additional images exceed the 10MB size limit.");
             }
 
             // Upload image to Cloudinary if a new one is provided, otherwise use existing
@@ -161,6 +171,16 @@ namespace RealEstateAPI.Controllers
             if (existingProperty == null)
             {
                 return NotFound("Property not found.");
+            }
+
+            long maxFileSize = 10 * 1024 * 1024; // 10MB
+            if (propertyDto.Image != null && propertyDto.Image.Length > maxFileSize)
+            {
+                return BadRequest("The main image exceeds the 10MB size limit.");
+            }
+            if (propertyDto.AdditionalImages != null && propertyDto.AdditionalImages.Any(f => f.Length > maxFileSize))
+            {
+                return BadRequest("One or more additional images exceed the 10MB size limit.");
             }
 
             string imageUrl = existingProperty.ImageUrl;

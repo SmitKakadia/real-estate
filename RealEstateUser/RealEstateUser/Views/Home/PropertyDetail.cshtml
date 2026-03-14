@@ -1,4 +1,4 @@
-﻿@model RealEstateUser.Models.PropertyModel
+@model RealEstateUser.Models.PropertyModel
 
 @{
     ViewData["Title"] = @Model.Title;
@@ -390,11 +390,21 @@
                 <div class="d-flex flex-column gap-3 mt-4 pt-2">
                     @{
                         var currentUserIdStr = Context.Session.GetString("UserID");
+                        var currentUserRole  = Context.Session.GetString("Role");
+                        bool isAdmin = currentUserRole == "Admin";
                         bool isOwner = currentUserIdStr == Model.UserID.ToString();
-                        bool isSold = Model.Status.ToLower().Contains("sold");
+                        bool isSold  = Model.Status.ToLower().Contains("sold");
                     }
 
-                    @if (isOwner)
+                    @if (isAdmin)
+                    {
+                        <!-- Admin sees a neutral preview banner, no buy/contact options -->
+                        <div class="pd-alert" style="background:rgba(201,162,39,0.08); border:1px solid rgba(201,162,39,0.25); color:var(--gold); flex-direction:column; gap:0.4rem; text-align:center;">
+                            <div><i class="fa-solid fa-shield-halved me-2"></i><strong>Admin Preview</strong></div>
+                            <div style="font-size:0.75rem; color:#9ca3af; font-weight:400;">You are viewing this listing as an administrator. Transactions are not available.</div>
+                        </div>
+                    }
+                    else if (isOwner)
                     {
                         <div class="pd-alert" style="background:rgba(201,162,39,0.1); border:1px solid rgba(201,162,39,0.3); color:var(--gold);">
                             <i class="fa-solid fa-house-user"></i> You are the owner of this property
@@ -420,9 +430,9 @@
                         <button type="button" class="pd-btn pd-btn-secondary" data-bs-toggle="modal" data-bs-target="#feedbackModal">
                             <i class="fa-regular fa-comment-dots"></i> Review
                         </button>
-                        <a asp-controller="Home" asp-action="Index" class="pd-btn pd-btn-secondary">
+                        <button onclick="history.back()" class="pd-btn pd-btn-secondary">
                             <i class="fa-solid fa-arrow-left"></i> Back
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
