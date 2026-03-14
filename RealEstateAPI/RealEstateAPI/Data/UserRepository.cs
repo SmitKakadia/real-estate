@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using RealEstateAPI.Model;
 using System;
@@ -69,6 +69,25 @@ namespace RealEstateAPI.Data
                     CommandType = CommandType.StoredProcedure
                 };
                 cmd.Parameters.AddWithValue("@Email", email);
+
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    return ReadUser(reader);
+                }
+            }
+            return null;
+        }
+        #endregion
+
+        #region GetUserByPhone (For Registration Check)
+        public UserModel? GetUserByPhone(string phoneNo)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                SqlCommand cmd = new SqlCommand("SELECT * FROM [User] WHERE PhoneNo = @PhoneNo", conn);
+                cmd.Parameters.AddWithValue("@PhoneNo", phoneNo);
 
                 conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();

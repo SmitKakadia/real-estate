@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using RealEstateUser.Models;
 using System.Collections.Generic;
@@ -25,118 +25,6 @@ namespace RealEstateUser.Controllers
 
       
 
-        // GET: /Property/Edit?id=5
-        [HttpGet("Edit")]
-        public async Task<IActionResult> Edit(int id)
-        {
-            try
-            {
-                string token = HttpContext.Session.GetString("AuthToken");
-                string userIdString = HttpContext.Session.GetString("UserID");
-
-                if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdString))
-                {
-                    return Unauthorized();
-                }
-
-                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                HttpResponseMessage response = await _client.GetAsync($"{apiUrl}/{id}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var property = JsonConvert.DeserializeObject<PropertyModel>(jsonResponse);
-
-                    int currentUserId = int.Parse(userIdString);
-
-                    if (property == null || property.UserID != currentUserId)
-                    {
-                        return Forbid();
-                    }
-                    return Json(property);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error fetching property details: {ex.Message}");
-            }
-
-            return BadRequest();
-        }
-
-        // POST: /Property/Edit
-        [HttpPost("Edit")]
-        public async Task<IActionResult> Edit(PropertyDto model)
-        {
-            string token = HttpContext.Session.GetString("AuthToken");
-            string userIdString = HttpContext.Session.GetString("UserID");
-
-            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userIdString))
-            {
-                return Unauthorized();
-            }
-
-            int currentUserId = int.Parse(userIdString);
-            if (model.UserID != currentUserId)
-            {
-                return Forbid();
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest("Invalid data.");
-            }
-
-            try
-            {
-                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-               
-                if (model.UserID == 0)
-                {
-                    model.UserID = currentUserId;
-                }
-
-                using (var content = new MultipartFormDataContent())
-                {
-                    content.Add(new StringContent(model.PropertyID.ToString()), "PropertyID");
-                    content.Add(new StringContent(model.Title), "Title");
-                    content.Add(new StringContent(model.Location), "Location");
-                    content.Add(new StringContent(model.Description), "Description");
-                    content.Add(new StringContent(model.Price.ToString()), "Price");
-                    content.Add(new StringContent(model.Type), "Type");
-                    content.Add(new StringContent(model.Status), "Status");
-                    content.Add(new StringContent(model.UserID.ToString()), "UserID");
-
-                    if (model.ImageUrl != null && model.ImageUrl.Length > 0)
-                    {
-                        var fileStream = model.ImageUrl.OpenReadStream();
-                        var streamContent = new StreamContent(fileStream);
-                        streamContent.Headers.ContentType = new MediaTypeHeaderValue(model.ImageUrl.ContentType);
-                        content.Add(streamContent, "Image", model.ImageUrl.FileName);
-                    }
-
-                    var request = new HttpRequestMessage(HttpMethod.Put, $"{apiUrl}/{model.PropertyID}")
-                    {
-                        Content = content
-                    };
-                    HttpResponseMessage response = await _client.SendAsync(request);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return Ok("Property updated successfully.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error updating property: {ex.Message}");
-            }
-
-            return BadRequest("Failed to update property.");
-        }
-
-       
         [HttpGet("MyProperties")]
         public async Task<IActionResult> MyProperties()
         {
@@ -169,7 +57,7 @@ namespace RealEstateUser.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    userProperties = JsonConvert.DeserializeObject<List<PropertyModel>>(jsonResponse);
+                    userProperties = JsonConvert.DeserializeObject<List<PropertyModel>>(jsonResponse) ?? new List<PropertyModel>();
                 }
                 else
                 {

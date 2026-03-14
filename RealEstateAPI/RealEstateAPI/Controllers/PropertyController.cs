@@ -162,7 +162,12 @@ namespace RealEstateAPI.Controllers
         [HttpPut("{propertyID}")]
         public async Task<IActionResult> UpdateProperty(int propertyID, [FromForm] PropertyDto propertyDto)
         {
-            if (propertyID != propertyDto.PropertyID)
+            // Allow propertyDto.PropertyID to be 0 (not sent in body) — trust the URL param
+            if (propertyDto.PropertyID == 0)
+            {
+                propertyDto.PropertyID = propertyID;
+            }
+            else if (propertyID != propertyDto.PropertyID)
             {
                 return BadRequest("Property ID mismatch.");
             }
@@ -183,16 +188,25 @@ namespace RealEstateAPI.Controllers
                 return BadRequest("One or more additional images exceed the 10MB size limit.");
             }
 
-            string imageUrl = existingProperty.ImageUrl;
-            if (propertyDto.Image != null)
+            string imageUrl;
+            // Priority: new uploaded image > ExistingImageUrl from form > DB image
+            if (propertyDto.Image != null && propertyDto.Image.Length > 0)
             {
-                // Upload new image to Cloudinary
                 imageUrl = await _cloudinaryService.UploadImageAsync(propertyDto.Image);
                 if (string.IsNullOrEmpty(imageUrl))
-                {
                     return StatusCode(500, "Image upload failed.");
-                }
             }
+            else if (!string.IsNullOrEmpty(propertyDto.ImageUrl))
+            {
+                imageUrl = propertyDto.ImageUrl;
+            }
+            else
+            {
+                imageUrl = existingProperty.ImageUrl;
+            }
+
+            // Always resubmit with Pending status so admin needs to re-review
+            propertyDto.Status = "Pending";
 
             var updatedProperty = new PropertyModel
             {
@@ -202,10 +216,29 @@ namespace RealEstateAPI.Controllers
                 Description = propertyDto.Description,
                 Price = propertyDto.Price,
                 Type = propertyDto.Type,
-                Status = propertyDto.Status,
+                Status = "Pending",
                 UserID = propertyDto.UserID,
                 ImageUrl = imageUrl
             };
+
+            // Map over existing additional images from the DTO, if any were preserved by the frontend
+            if (propertyDto.ExistingAdditionalImages != null && propertyDto.ExistingAdditionalImages.Count > 0)
+            {
+                updatedProperty.AdditionalImages.AddRange(propertyDto.ExistingAdditionalImages);
+            }
+
+            // Upload any new additional images
+            if (propertyDto.AdditionalImages != null && propertyDto.AdditionalImages.Count > 0)
+            {
+                foreach (var file in propertyDto.AdditionalImages)
+                {
+                    var addImgUrl = await _cloudinaryService.UploadImageAsync(file);
+                    if (!string.IsNullOrEmpty(addImgUrl))
+                    {
+                        updatedProperty.AdditionalImages.Add(addImgUrl);
+                    }
+                }
+            }
 
             var isUpdated = _propertyRepository.UpdateProperty(updatedProperty);
             if (!isUpdated)
@@ -264,9 +297,9 @@ namespace RealEstateAPI.Controllers
             var buyerProperties = _propertyRepository.SelectPropertiesByBuyer(userID);
 
            
-            if (buyerProperties == null || buyerProperties.Count == 0)
+            if (buyerProperties == null)
             {
-                return Ok("This buyer did not purchase any property.");
+                return Ok(new List<PropertyModel>());
             }
 
             return Ok(buyerProperties);

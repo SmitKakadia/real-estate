@@ -76,6 +76,10 @@ namespace RealEstateAPI.Controllers
             if (existingUser != null)
                 return BadRequest(new { message = "Email already registered." });
 
+            var existingPhoneUser = _userRepository.GetUserByPhone(user.PhoneNo);
+            if (existingPhoneUser != null)
+                return BadRequest(new { message = "Phone Number already registered." });
+
             var success = _userRepository.InsertUser(user);
             if (!success)
                 return StatusCode(500, new { message = "Failed to register the user." });

@@ -8,6 +8,7 @@ namespace RealEstateUser.Models
         public int ActiveProperties { get; set; }
         public int PendingApprovals { get; set; }
         public int TotalTransactions { get; set; }
+        public decimal TotalVolume { get; set; }
     }
 
     public class ActivityItemModel

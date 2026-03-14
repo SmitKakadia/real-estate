@@ -138,6 +138,36 @@
 
     /* Toast notifications */
     .toast-msg { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; background: rgba(20,22,28,0.95); border: 1px solid rgba(74,222,128,0.4); color: #4ade80; padding: 1rem 1.5rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+
+    /* Custom Rejection Modal */
+    .reject-modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+        z-index: 9999; display: none; align-items: center; justify-content: center;
+        opacity: 0; transition: opacity 0.2s;
+    }
+    .reject-modal-overlay.active { display: flex; opacity: 1; }
+    .reject-modal {
+        background: #111318; border: 1px solid #1f2230; border-top: 4px solid #f87171;
+        border-radius: 12px; padding: 2rem; width: 90%; max-width: 450px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6); transform: translateY(20px);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .reject-modal-overlay.active .reject-modal { transform: translateY(0); }
+    .reject-modal-title { font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .reject-modal-desc { font-size: 0.85rem; color: #9ca3af; margin-bottom: 1.5rem; }
+    .reject-textarea {
+        width: 100%; background: #0e1017; border: 1px solid #1f2230; border-radius: 8px;
+        padding: 0.75rem 1rem; color: #fff; font-family: 'Poppins', sans-serif;
+        font-size: 0.85rem; resize: vertical; min-height: 100px; outline: none; margin-bottom: 1.5rem;
+        transition: border-color 0.2s;
+    }
+    .reject-textarea:focus { border-color: #f87171; }
+    .reject-btn-group { display: flex; gap: 0.75rem; justify-content: flex-end; }
+    .btn-cancel { background: transparent; color: #9ca3af; border: 1px solid #1f2230; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-cancel:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .btn-confirm-reject { background: #f87171; color: #0a0a0a; border: none; border-radius: 6px; padding: 0.5rem 1.25rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-confirm-reject:hover { background: #dc2626; }
 </style>
 }
 
@@ -155,7 +185,6 @@
     <section class="section-anchor mb-5" id="overview">
         <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:1.5rem;">
             <h2 class="section-title">Platform Overview</h2>
-            <span style="font-size:0.75rem; color:#6b7280; font-style:italic;">Live from Database</span>
         </div>
         <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:1.25rem;">
             <!-- Total Users -->
@@ -179,9 +208,15 @@
             </div>
             <!-- Total Transactions -->
             <div class="metric-card">
-                <i class="fa-solid fa-dollar-sign bg-icon"></i>
+                <i class="fa-solid fa-receipt bg-icon"></i>
                 <div class="metric-label">Total Transactions</div>
                 <div class="metric-value">@Model.Stats.TotalTransactions</div>
+            </div>
+            <!-- Total Sales Volume -->
+            <div class="metric-card">
+                <i class="fa-solid fa-sack-dollar bg-icon"></i>
+                <div class="metric-label">Total Sales Volume</div>
+                <div class="metric-value" style="color:var(--luxe-gold);">$@Model.Stats.TotalVolume.ToString("N0")</div>
             </div>
         </div>
 
@@ -268,15 +303,12 @@
                             </div>
                             <!-- Action buttons -->
                             <div style="display:flex; gap:0.6rem; margin-top:0.5rem;">
-                                <form asp-action="ApproveProperty" method="post" style="flex:1;">
-                                    <input type="hidden" name="id" value="@p.PropertyID" />
-                                    <button type="submit" class="btn-approve w-100"><i class="fa-solid fa-check me-1"></i>Approve</button>
-                                </form>
-                                <form asp-action="RejectProperty" method="post" style="flex:1;" onsubmit="return promptReject(this);">
-                                    <input type="hidden" name="id" value="@p.PropertyID" />
-                                    <input type="hidden" name="reason" class="reject-reason" value="" />
-                                    <button type="submit" class="btn-reject w-100"><i class="fa-solid fa-xmark me-1"></i>Reject</button>
-                                </form>
+                                <button type="button" class="btn-approve w-100" onclick="handleApprove(@p.PropertyID, this)">
+                                    <i class="fa-solid fa-check me-1"></i>Approve
+                                </button>
+                                <button type="button" class="btn-reject w-100" onclick="openRejectModal(@p.PropertyID, this)">
+                                    <i class="fa-solid fa-xmark me-1"></i>Reject
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -407,7 +439,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var prop in Model.AllProperties)
+                    @foreach (var prop in Model.AllProperties.Where(x => x.Status == "Available" || x.Status == "Sold" || x.Status == "Rented"))
                     {
                         <tr>
                             <td>
@@ -426,8 +458,8 @@
                             <td style="text-align:center;">
                                 @{
                                     var s = prop.Status?.ToLower() ?? "";
-                                    if (!prop.IsApproved) { <text><span class="badge-pending">Pending</span></text> }
-                                    else if (s.Contains("sold")) { <text><span class="badge-sold">Sold</span></text> }
+                                    if (s.Contains("sold")) { <text><span class="badge-sold">Sold</span></text> }
+                                    else if (!prop.IsApproved) { <text><span class="badge-pending">Pending</span></text> }
                                     else if (s.Contains("reject")) { <text><span class="badge-rejected">Rejected</span></text> }
                                     else { <text><span class="badge-available">Available</span></text> }
                                 }
@@ -506,24 +538,180 @@
         <p style="font-size:0.65rem; color:#374151; text-transform:uppercase; letter-spacing:2px;">© @DateTime.Now.Year Lumina Luxe International Admin Center · Encrypted Session Active</p>
     </footer>
 
+    <!-- Custom Rejection Modal Layout -->
+    <div class="reject-modal-overlay" id="rejectModalOverlay">
+        <div class="reject-modal">
+            <h3 class="reject-modal-title"><i class="fa-solid fa-triangle-exclamation" style="color:#f87171;"></i> Reject Property</h3>
+            <p class="reject-modal-desc">Provide a reason for rejecting this property. The seller will see this note and can fix the issues and resubmit.</p>
+            <input type="hidden" id="rejectPropertyId" />
+            <textarea id="rejectReasonText" class="reject-textarea" placeholder="e.g. The cover image is too blurry. Please upload a clear photo of the property front."></textarea>
+            <div class="reject-btn-group">
+                <button type="button" class="btn-cancel" onclick="closeRejectModal()">Cancel</button>
+                <button type="button" class="btn-confirm-reject" onclick="submitReject()"><i class="fa-solid fa-paper-plane me-1"></i> Send Rejection</button>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 @section Scripts {
 <script>
-    function promptReject(form) {
-        var reason = prompt("Enter a reason for rejecting this property (optional):");
-        if (reason === null) {
-            return false; // User cancelled prompt
-        }
-        form.querySelector('.reject-reason').value = reason;
-        return true;
-    }
-
-    // Auto-dismiss toast after 4s
+    // --- Ajax Handlers for Approve/Reject --- //
+    
+    // Auto-dismiss toast after 4s (from standard server-side renders)
     setTimeout(function () {
         var t = document.getElementById('toastMsg');
         if (t) t.style.display = 'none';
     }, 4000);
+    
+    // Show a dynamic toast message
+    function showToast(msg, isError = false) {
+        // Remove existing toast if any
+        let existing = document.getElementById('dynamicToast');
+        if (existing) existing.remove();
+        
+        let color = isError ? '#f87171' : '#4ade80';
+        let border = isError ? 'rgba(239,68,68,0.4)' : 'rgba(74,222,128,0.4)';
+        let icon = isError ? 'fa-triangle-exclamation' : 'fa-circle-check';
+        
+        let toast = document.createElement('div');
+        toast.id = 'dynamicToast';
+        toast.className = 'toast-msg';
+        toast.style.borderColor = border;
+        toast.style.color = color;
+        toast.innerHTML = `<i class="fa-solid ${icon} me-2"></i>${msg}`;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => { toast.style.display = 'none'; toast.remove(); }, 4000);
+    }
+    
+    // Update Pending Count
+    function updatePendingCount() {
+        let cards = document.querySelectorAll('.approval-card');
+        let countBadge = document.querySelector('.section-anchor#moderation .section-title').nextElementSibling;
+        if (countBadge) {
+            countBadge.textContent = cards.length + " Awaiting Review";
+            if(cards.length === 0) {
+                // Refresh to show the empty state message if none left
+                location.reload();
+            }
+        }
+    }
+    
+    // Handle Approve
+    function handleApprove(propertyId, btnElement) {
+        // Find the card container
+        let card = btnElement.closest('.approval-card');
+        
+        // Disable button and show loading
+        let originalText = btnElement.innerHTML;
+        btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Approving...';
+        btnElement.disabled = true;
+        
+        $.ajax({
+            url: '@Url.Action("ApproveProperty", "Admin")',
+            type: 'POST',
+            data: { id: propertyId },
+            success: function (res) {
+                if (res.success) {
+                    showToast("Property Approved successfully.");
+                    // Remove card with animation
+                    card.style.transition = "all 0.4s ease";
+                    card.style.opacity = "0";
+                    card.style.transform = "scale(0.95)";
+                    setTimeout(() => { 
+                        card.remove(); 
+                        updatePendingCount(); 
+                        location.reload(); // FORCE RELOAD to update all dashboard stats
+                    }, 400);
+                } else {
+                    showToast(res.message || "Failed to approve property.", true);
+                    btnElement.innerHTML = originalText;
+                    btnElement.disabled = false;
+                }
+            },
+            error: function () {
+                showToast("Failed to approve property.", true);
+                btnElement.innerHTML = originalText;
+                btnElement.disabled = false;
+            }
+        });
+    }
+
+    // Modal Logic for Reject
+    let currentRejectCard = null;
+
+    function openRejectModal(propertyId, btnElement) {
+        document.getElementById('rejectPropertyId').value = propertyId;
+        document.getElementById('rejectReasonText').value = '';
+        currentRejectCard = btnElement.closest('.approval-card');
+        
+        const overlay = document.getElementById('rejectModalOverlay');
+        overlay.style.display = 'flex';
+        // tiny delay to allow display flex to apply before opacity transition
+        setTimeout(() => overlay.classList.add('active'), 10);
+    }
+
+    function closeRejectModal() {
+        const overlay = document.getElementById('rejectModalOverlay');
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.style.display = 'none', 200);
+        currentRejectCard = null;
+    }
+
+    function submitReject() {
+        let propertyId = document.getElementById('rejectPropertyId').value;
+        let reason = document.getElementById('rejectReasonText').value;
+        
+        if (!reason || reason.trim() === '') {
+            alert("Please provide a rejection reason.");
+            return;
+        }
+
+        let confirmBtn = document.querySelector('.btn-confirm-reject');
+        let originalHtml = confirmBtn.innerHTML;
+        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Sending...';
+        confirmBtn.disabled = true;
+
+        $.ajax({
+            url: '@Url.Action("RejectProperty", "Admin")',
+            type: 'POST',
+            data: { id: propertyId, reason: reason },
+            success: function (res) {
+                if (res.success) {
+                    showToast("Property Rejected.");
+                    closeRejectModal();
+                    
+                    // Reset button state
+                    setTimeout(() => {
+                        confirmBtn.innerHTML = originalHtml;
+                        confirmBtn.disabled = false;
+                    }, 300);
+                    
+                    // Remove card with animation
+                    if (currentRejectCard) {
+                        currentRejectCard.style.transition = "all 0.4s ease";
+                        currentRejectCard.style.opacity = "0";
+                        currentRejectCard.style.transform = "scale(0.95) translateX(-20px)";
+                        setTimeout(() => { 
+                            currentRejectCard.remove(); 
+                            updatePendingCount(); 
+                        }, 400);
+                    }
+                } else {
+                    showToast(res.message || "Failed to reject property.", true);
+                    confirmBtn.innerHTML = originalHtml;
+                    confirmBtn.disabled = false;
+                }
+            },
+            error: function () {
+                showToast("Failed to reject property.", true);
+                confirmBtn.innerHTML = originalHtml;
+                confirmBtn.disabled = false;
+            }
+        });
+    }
 
     // 3-dot dropdown toggle — flips up if near bottom of viewport
     function toggleMenu(btn) {
@@ -550,7 +738,7 @@
     }
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('.dots-wrapper')) {
+        if (!e.target.closest('.dots-wrapper') && !e.target.closest('.reject-modal')) {
             document.querySelectorAll('.dots-menu.open').forEach(function(m) {
                 m.classList.remove('open', 'flip-up');
             });

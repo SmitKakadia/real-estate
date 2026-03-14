@@ -21,7 +21,15 @@ namespace RealEstateAPI.Data
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand("GetAdminStats", conn) { CommandType = CommandType.StoredProcedure };
+                // Direct SQL bypasses the SP to easily add the Total Sum of revenue
+                SqlCommand cmd = new SqlCommand(@"
+                    SELECT 
+                        (SELECT COUNT(*) FROM [User]) AS TotalUsers,
+                        (SELECT COUNT(*) FROM Property WHERE Status = 'Available') AS ActiveProperties,
+                        (SELECT COUNT(*) FROM Property WHERE Status = 'Pending') AS PendingApprovals,
+                        (SELECT COUNT(*) FROM [Transaction]) AS TotalTransactions,
+                        (SELECT ISNULL(SUM(Amount), 0) FROM [Transaction]) AS TotalVolume", conn);
+                
                 conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.Read())
@@ -31,7 +39,8 @@ namespace RealEstateAPI.Data
                         TotalUsers = Convert.ToInt32(reader["TotalUsers"]),
                         ActiveProperties = Convert.ToInt32(reader["ActiveProperties"]),
                         PendingApprovals = Convert.ToInt32(reader["PendingApprovals"]),
-                        TotalTransactions = Convert.ToInt32(reader["TotalTransactions"])
+                        TotalTransactions = Convert.ToInt32(reader["TotalTransactions"]),
+                        TotalVolume = Convert.ToDecimal(reader["TotalVolume"])
                     };
                 }
                 return new AdminStatsModel();

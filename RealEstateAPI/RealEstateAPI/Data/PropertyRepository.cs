@@ -118,10 +118,8 @@ namespace RealEstateAPI.Data
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand("ApproveProperty", conn)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                // In the database, an approved property is marked as 'Available'
+                SqlCommand cmd = new SqlCommand("UPDATE Property SET Status = 'Available', RejectionReason = NULL WHERE PropertyID = @PropertyID", conn);
                 cmd.Parameters.AddWithValue("@PropertyID", propertyID);
                 conn.Open();
                 return cmd.ExecuteNonQuery() > 0;
@@ -132,10 +130,8 @@ namespace RealEstateAPI.Data
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand("RejectProperty", conn)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                // In the database, a rejected property stays 'Pending' but gains a RejectionReason
+                SqlCommand cmd = new SqlCommand("UPDATE Property SET Status = 'Pending', RejectionReason = @RejectionReason WHERE PropertyID = @PropertyID", conn);
                 cmd.Parameters.AddWithValue("@PropertyID", propertyID);
                 cmd.Parameters.AddWithValue("@RejectionReason", string.IsNullOrEmpty(rejectionReason) ? DBNull.Value : (object)rejectionReason);
                 conn.Open();
@@ -248,36 +244,59 @@ namespace RealEstateAPI.Data
         #region UpdateProperty
         public bool UpdateProperty(PropertyModel property)
         {
-            int rowsAffected;
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand("UpdateProperty", conn)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                conn.Open();
+
+                // Use a direct SQL UPDATE so rowsAffected is always reliable.
+                // The stored procedure's ExecuteNonQuery can return 0 even on success
+                // (e.g. when the SP uses SELECT or OUTPUT internally), causing false BadRequest responses.
+                SqlCommand cmd = new SqlCommand(@"
+                    UPDATE Property
+                    SET Title           = @Title,
+                        Location        = @Location,
+                        Description     = @Description,
+                        Price           = @Price,
+                        [Type]          = @Type,
+                        Status          = 'Pending',
+                        RejectionReason = NULL,
+                        ImageUrl        = @ImageUrl
+                    WHERE PropertyID = @PropertyID", conn);
+
                 cmd.Parameters.AddWithValue("@PropertyID", property.PropertyID);
                 cmd.Parameters.AddWithValue("@Title", property.Title);
                 cmd.Parameters.AddWithValue("@Location", property.Location);
                 cmd.Parameters.AddWithValue("@Description", property.Description);
                 cmd.Parameters.AddWithValue("@Price", property.Price);
                 cmd.Parameters.AddWithValue("@Type", property.Type);
-                // When modifying from frontend after a rejection, Status goes back to "Pending"
-                if (property.Status == "Pending")
-                {
-                    cmd.Parameters.AddWithValue("@Status", "Pending");
-                }
-                else
-                {
-                    cmd.Parameters.AddWithValue("@Status", property.Status);
-                }
-                
-                cmd.Parameters.AddWithValue("@UserID", property.UserID);
                 cmd.Parameters.AddWithValue("@ImageUrl", property.ImageUrl);
 
-                conn.Open();
-                rowsAffected = cmd.ExecuteNonQuery();
+                int rowsAffected = cmd.ExecuteNonQuery();
+
+                if (rowsAffected <= 0) return false;
+
+                // Sync gallery images: always clear old ones and re-insert surviving/new ones
+                SqlCommand deleteCmd = new SqlCommand(
+                    "DELETE FROM PropertyImages WHERE PropertyID = @PropertyID", conn);
+                deleteCmd.Parameters.AddWithValue("@PropertyID", property.PropertyID);
+                deleteCmd.ExecuteNonQuery();
+
+                if (property.AdditionalImages != null && property.AdditionalImages.Count > 0)
+                {
+                    foreach (var additionalImage in property.AdditionalImages)
+                    {
+                        SqlCommand imgCmd = new SqlCommand("InsertPropertyImage", conn)
+                        {
+                            CommandType = CommandType.StoredProcedure
+                        };
+                        imgCmd.Parameters.AddWithValue("@PropertyID", property.PropertyID);
+                        imgCmd.Parameters.AddWithValue("@ImageUrl", additionalImage);
+                        imgCmd.ExecuteNonQuery();
+                    }
+                }
+
+                return true;
             }
-            return rowsAffected > 0;
         }
         #endregion
 
@@ -342,28 +361,54 @@ namespace RealEstateAPI.Data
         #region UpdatePropertyStatusToSold
         public bool UpdatePropertyStatusToSold(int propertyID, int userID)
         {
-            int rowsAffected;
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand("UpdatePropertyStatusToSold", conn)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
-                cmd.Parameters.AddWithValue("@PropertyID", propertyID);
-                cmd.Parameters.AddWithValue("@UserID", userID);
-
-                // Add output parameter
-                SqlParameter outputParam = new SqlParameter("@RowsAffected", SqlDbType.Int)
-                {
-                    Direction = ParameterDirection.Output
-                };
-                cmd.Parameters.Add(outputParam);
-
                 conn.Open();
-                cmd.ExecuteNonQuery();
-                rowsAffected = (int)outputParam.Value;
+
+                // 1. Get SellerID and Price
+                SqlCommand getCmd = new SqlCommand("SELECT UserID, Price FROM Property WHERE PropertyID = @PropertyID", conn);
+                getCmd.Parameters.AddWithValue("@PropertyID", propertyID);
+                SqlDataReader reader = getCmd.ExecuteReader();
+                
+                int sellerId = 0;
+                decimal price = 0;
+                if (reader.Read())
+                {
+                    sellerId = Convert.ToInt32(reader["UserID"]);
+                    price = Convert.ToDecimal(reader["Price"]);
+                }
+                reader.Close();
+
+                if (sellerId == 0) return false;
+
+                // 2. Update Property to Sold and assign Buyer
+                SqlCommand updateCmd = new SqlCommand(
+                    "UPDATE Property SET Status = 'Sold', BuyerID = @UserID WHERE PropertyID = @PropertyID", conn);
+                updateCmd.Parameters.AddWithValue("@PropertyID", propertyID);
+                updateCmd.Parameters.AddWithValue("@UserID", userID);
+                int rowsAffected = updateCmd.ExecuteNonQuery();
+
+                // 3. Insert Transaction Record for Admin Panel
+                if (rowsAffected > 0)
+                {
+                    try 
+                    {
+                        SqlCommand transCmd = new SqlCommand(
+                            "INSERT INTO [Transaction] (Amount, TransactionDate, PropertyID, SellerID, BuyerID, Type) " +
+                            "VALUES (@Amount, GETDATE(), @PropertyID, @SellerID, @UserID, 'Credit')", conn);
+                        transCmd.Parameters.AddWithValue("@Amount", price);
+                        transCmd.Parameters.AddWithValue("@PropertyID", propertyID);
+                        transCmd.Parameters.AddWithValue("@SellerID", sellerId);
+                        transCmd.Parameters.AddWithValue("@UserID", userID);
+                        transCmd.ExecuteNonQuery();
+                    } 
+                    catch { /* Swallow transaction error so property is still marked Sold */ }
+                    
+                    return true;
+                }
+                
+                return false;
             }
-            return rowsAffected > 0;
         }
         #endregion
 

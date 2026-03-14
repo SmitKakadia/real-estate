@@ -79,24 +79,26 @@ namespace RealEstateUser.Controllers
         [HttpPost]
         public async Task<IActionResult> ApproveProperty(int id)
         {
-            if (!IsAdmin()) return Unauthorized();
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
             SetAuthHeader();
-            await _client.PutAsync($"{apiUrl}/approve/{id}", null);
-            TempData["SuccessMessage"] = "Property approved and is now live!";
-            return RedirectToAction("Index");
+            var response = await _client.PutAsync($"{apiUrl}/approve/{id}", null);
+            if (response.IsSuccessStatusCode)
+                return Json(new { success = true, message = "Property approved and is now live!" });
+            return Json(new { success = false, message = "Failed to approve property." });
         }
 
         [HttpPost]
         public async Task<IActionResult> RejectProperty(int id, string reason)
         {
-            if (!IsAdmin()) return Unauthorized();
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
             SetAuthHeader();
             var payload = new StringContent(
                 Newtonsoft.Json.JsonConvert.SerializeObject(reason ?? "No reason provided."),
                 System.Text.Encoding.UTF8, "application/json");
-            await _client.PutAsync($"{apiUrl}/reject/{id}", payload);
-            TempData["SuccessMessage"] = "Property rejected.";
-            return RedirectToAction("Index");
+            var response = await _client.PutAsync($"{apiUrl}/reject/{id}", payload);
+            if (response.IsSuccessStatusCode)
+                return Json(new { success = true, message = "Property rejected successfully." });
+            return Json(new { success = false, message = "Failed to reject property." });
         }
 
         [HttpPost]

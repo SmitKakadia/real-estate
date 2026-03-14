@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using RealEstateUser.Models;
@@ -60,8 +60,10 @@ namespace RealEstateUser.Controllers
 
                     if (role == "Admin")
                     {
+                        TempData["ToastMessage"] = "Login Successful! Welcome Admin.";
                         return RedirectToAction("Index", "Admin");
                     }
+                    TempData["ToastMessage"] = "Login Successful! Redirecting...";
                     return RedirectToAction("Index", "Home");
                 }
 
@@ -82,7 +84,7 @@ namespace RealEstateUser.Controllers
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.ErrorMessage = "Please fill in all required fields.";
+                ViewBag.ErrorMessage = "Please correct the errors in the form.";
                 return View(model);
             }
 
@@ -91,6 +93,7 @@ namespace RealEstateUser.Controllers
                 var response = await _client.PostAsJsonAsync($"{apiUrl}/register", model);
                 if (response.IsSuccessStatusCode)
                 {
+                    TempData["ToastMessage"] = "Registration Successful! You can now sign in.";
                     return RedirectToAction("Login");
                 }
                 
@@ -98,7 +101,7 @@ namespace RealEstateUser.Controllers
                 try 
                 {
                     dynamic errorObj = JsonConvert.DeserializeObject<dynamic>(errorResponse);
-                    ViewBag.ErrorMessage = errorObj.message;
+                    ViewBag.ErrorMessage = (string)errorObj.message;
                 } 
                 catch 
                 {
@@ -116,6 +119,7 @@ namespace RealEstateUser.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
+            TempData["ToastMessage"] = "You have been logged out successfully.";
             return RedirectToAction("Login");
         }
     }
