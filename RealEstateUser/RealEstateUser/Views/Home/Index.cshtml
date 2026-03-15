@@ -19,8 +19,6 @@
     .hero {
         position: relative;
         height: 340px;
-        background: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80')
-                    center center / cover no-repeat;
         border-radius: 14px;
         margin: 0 auto;
         max-width: 1200px;
@@ -220,6 +218,71 @@
         font-size: 0.65rem;
         color: var(--text-dim);
     }
+
+    /* ══════════════════════════════════════════
+       HERO ANIMATIONS
+    ══════════════════════════════════════════ */
+
+    /* 1. Ken Burns — slow zoom on the background image */
+    @@keyframes kenBurns {
+        0%   { transform: scale(1.00); }
+        100% { transform: scale(1.08); }
+    }
+    /* Clip wrapper: clips the zoom WITHOUT hiding the hanging search bar */
+    .hero-bg-wrap {
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        overflow: hidden;
+        z-index: 0;
+    }
+    .hero-bg {
+        position: absolute;
+        inset: 0;
+        background: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80')
+                    center center / cover no-repeat;
+        animation: kenBurns 14s ease-in-out infinite alternate;
+        will-change: transform;
+    }
+
+    /* 2. Split text — staggered slide-up for hero text lines */
+    @@keyframes heroLineUp {
+        from { opacity: 0; transform: translateY(22px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-eyebrow {
+        opacity: 0;
+        animation: heroLineUp 0.65s cubic-bezier(0.22,1,0.36,1) 0.2s forwards;
+    }
+    .hero-title {
+        opacity: 0;
+        animation: heroLineUp 0.65s cubic-bezier(0.22,1,0.36,1) 0.42s forwards;
+    }
+    .hero-subtitle {
+        opacity: 0;
+        animation: heroLineUp 0.65s cubic-bezier(0.22,1,0.36,1) 0.62s forwards;
+    }
+
+    /* 3. Search bar float-up */
+    @@keyframes searchFloat {
+        from { opacity: 0; transform: translate(-50%, 65%); }
+        to   { opacity: 1; transform: translate(-50%, 50%); }
+    }
+    .search-bar-wrap {
+        animation: searchFloat 0.7s cubic-bezier(0.22,1,0.36,1) 0.85s both;
+    }
+
+    /* 4. Search button pulse-glow to draw attention */
+    @@keyframes searchBtnPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(201,162,39,0.45); }
+        50%       { box-shadow: 0 0 0 8px rgba(201,162,39,0); }
+    }
+    .search-btn {
+        animation: searchBtnPulse 2.2s ease-in-out 1.8s infinite;
+    }
+    .search-btn:hover {
+        animation: none; /* stop pulsing once hovered */
+    }
 </style>
 }
 
@@ -228,6 +291,8 @@
 
     <!-- Hero image block -->
     <div class="hero">
+        <!-- bg-wrap clips the Ken Burns zoom, hero itself stays overflow:visible for search bar -->
+        <div class="hero-bg-wrap"><div class="hero-bg"></div></div>
         <div class="hero-content">
             <p class="hero-eyebrow">Ultra-Premium Coastal Estates</p>
             <h1 class="hero-title">Discover Your <em>Horizon</em></h1>

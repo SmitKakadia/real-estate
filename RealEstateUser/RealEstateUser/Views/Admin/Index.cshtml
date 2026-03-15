@@ -71,7 +71,6 @@
         background: rgba(20,22,28,0.7);
         backdrop-filter: blur(12px);
         border: 1px solid rgba(255,255,255,0.08);
-        border-left: 4px solid rgba(245,158,11,0.5);
         border-radius: 16px;
         padding: 1rem;
         display: flex;
@@ -186,37 +185,37 @@
         <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:1.5rem;">
             <h2 class="section-title">Platform Overview</h2>
         </div>
-        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:1.25rem;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:1.25rem;" class="lx-reveal-group">
             <!-- Total Users -->
             <div class="metric-card">
                 <i class="fa-solid fa-users bg-icon"></i>
                 <div class="metric-label">Total Users</div>
-                <div class="metric-value">@Model.Stats.TotalUsers</div>
+                <div class="metric-value" data-count="@Model.Stats.TotalUsers">0</div>
             </div>
             <!-- Active Properties -->
             <div class="metric-card">
                 <i class="fa-solid fa-house bg-icon"></i>
                 <div class="metric-label">Active Properties</div>
-                <div class="metric-value">@Model.Stats.ActiveProperties</div>
+                <div class="metric-value" data-count="@Model.Stats.ActiveProperties">0</div>
             </div>
             <!-- Pending Approvals -->
             <div class="metric-card">
                 <i class="fa-solid fa-hourglass-half bg-icon"></i>
                 <div class="metric-label">Pending Approvals</div>
-                <div class="metric-value" style="color:#fbbf24;">@Model.Stats.PendingApprovals</div>
+                <div class="metric-value" style="color:#fbbf24;" data-count="@Model.Stats.PendingApprovals">0</div>
                 <div class="metric-badge" style="color:#fbbf24;">Needs Review</div>
             </div>
             <!-- Total Transactions -->
             <div class="metric-card">
                 <i class="fa-solid fa-receipt bg-icon"></i>
                 <div class="metric-label">Total Transactions</div>
-                <div class="metric-value">@Model.Stats.TotalTransactions</div>
+                <div class="metric-value" data-count="@Model.Stats.TotalTransactions">0</div>
             </div>
             <!-- Total Sales Volume -->
             <div class="metric-card">
                 <i class="fa-solid fa-sack-dollar bg-icon"></i>
                 <div class="metric-label">Total Sales Volume</div>
-                <div class="metric-value" style="color:var(--luxe-gold);">$@Model.Stats.TotalVolume.ToString("N0")</div>
+                <div class="metric-value" style="color:var(--luxe-gold);" data-count-prefix="$" data-count="@((int)Model.Stats.TotalVolume)">$0</div>
             </div>
         </div>
 
@@ -288,8 +287,16 @@
                         </div>
                         <!-- Content below image -->
                         <div style="padding:1.1rem 1.25rem 1.25rem; display:flex; flex-direction:column; gap:0.5rem;">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
                                 <h4 style="font-size:1rem; font-weight:700; color:#fff; margin:0; line-height:1.3;">@p.Title</h4>
+                                @if (p.Type?.ToLower() == "rent")
+                                {
+                                    <span style="flex-shrink:0; font-size:0.55rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; background:rgba(99,102,241,0.15); color:#818cf8; border:1px solid rgba(99,102,241,0.3); white-space:nowrap;">For Rent</span>
+                                }
+                                else
+                                {
+                                    <span style="flex-shrink:0; font-size:0.55rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:0.2rem 0.55rem; border-radius:999px; background:rgba(201,162,39,0.12); color:#c9a227; border:1px solid rgba(201,162,39,0.3); white-space:nowrap;">For Sale</span>
+                                }
                             </div>
                             <p style="font-size:0.8rem; color:#6b7280; margin:0;"><i class="fa-solid fa-location-dot me-1"></i>@p.Location</p>
                             <p style="font-size:1.25rem; font-weight:800; color:var(--luxe-gold); margin:0.2rem 0;">$@p.Price.ToString("N0")</p>
@@ -556,6 +563,40 @@
 
 @section Scripts {
 <script>
+    // ── Counter Roll-Up for Stat Cards ── //
+    (function() {
+        function animateCount(el, target, prefix) {
+            const duration = 1200;
+            const start = performance.now();
+            (function tick(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease-out cubic
+                const ease = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(ease * target);
+                el.textContent = prefix + current.toLocaleString();
+                if (progress < 1) requestAnimationFrame(tick);
+            })(start);
+        }
+
+        const statsGrid = document.querySelector('.lx-reveal-group');
+        if (!statsGrid) return;
+
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    statsGrid.querySelectorAll('[data-count]').forEach(el => {
+                        const target = parseInt(el.dataset.count, 10) || 0;
+                        const prefix = el.dataset.countPrefix || '';
+                        animateCount(el, target, prefix);
+                    });
+                    io.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.2 });
+        io.observe(statsGrid);
+    })();
+
     // --- Ajax Handlers for Approve/Reject --- //
     
     // Auto-dismiss toast after 4s (from standard server-side renders)
@@ -680,25 +721,23 @@
             data: { id: propertyId, reason: reason },
             success: function (res) {
                 if (res.success) {
+                    // ✅ Capture the card BEFORE closeRejectModal() sets currentRejectCard = null
+                    let cardToRemove = currentRejectCard;
+
                     showToast("Property Rejected.");
                     closeRejectModal();
                     
-                    // Reset button state
-                    setTimeout(() => {
-                        confirmBtn.innerHTML = originalHtml;
-                        confirmBtn.disabled = false;
-                    }, 300);
-                    
-                    // Remove card with animation
-                    if (currentRejectCard) {
-                        currentRejectCard.style.transition = "all 0.4s ease";
-                        currentRejectCard.style.opacity = "0";
-                        currentRejectCard.style.transform = "scale(0.95) translateX(-20px)";
-                        setTimeout(() => { 
-                            currentRejectCard.remove(); 
-                            updatePendingCount(); 
-                        }, 400);
+                    // Remove card with animation, then reload
+                    if (cardToRemove) {
+                        cardToRemove.style.transition = "all 0.4s ease";
+                        cardToRemove.style.opacity = "0";
+                        cardToRemove.style.transform = "scale(0.95) translateX(-20px)";
                     }
+                    // Always reload after 500ms regardless of card state
+                    setTimeout(() => { 
+                        if (cardToRemove) cardToRemove.remove();
+                        location.reload();
+                    }, 500);
                 } else {
                     showToast(res.message || "Failed to reject property.", true);
                     confirmBtn.innerHTML = originalHtml;

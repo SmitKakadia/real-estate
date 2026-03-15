@@ -8,7 +8,7 @@
         int? sessionUserID = null;
         if (int.TryParse(sessionUserStr, out int uid)) { sessionUserID = uid; }
 
-        <div class="col-lg-4 col-md-6">
+        <div class="col-lg-4 col-md-6 prop-card-col">
             <div class="property-card h-100 d-flex flex-column"
                  style="background:#111318;border:1px solid #1f2230;
                         border-radius:14px;overflow:hidden;
@@ -53,7 +53,7 @@
                             @if (isFav)
                             {
                                 <i class="fa-solid fa-heart toggle-icon-@property.PropertyID"
-                                   style="color:#c9a227;font-size:0.75rem;"></i>
+                                   style="color:#ef4444;font-size:0.75rem;"></i>
                             }
                             else
                             {
@@ -138,3 +138,25 @@ else
         </div>
     </div>
 }
+
+<style>
+/* Staggered card entry animation */
+@@keyframes cardEntry {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.prop-card-col {
+    opacity: 0;
+    animation: cardEntry 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+    animation-delay: calc(var(--card-i, 0) * 90ms);
+}
+</style>
+
+<script>
+/* Assign stagger index to each card so animation-delay works */
+(function() {
+    document.querySelectorAll('.prop-card-col').forEach(function(el, i) {
+        el.style.setProperty('--card-i', i);
+    });
+})();
+</script>

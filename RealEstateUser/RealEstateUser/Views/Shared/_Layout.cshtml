@@ -231,6 +231,90 @@
             100% { transform: scale(1); }
         }
         .heart-animate { animation: heartBurst 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+
+        /* ══════════════════════════════════════════
+           GLOBAL ANIMATION SYSTEM
+        ══════════════════════════════════════════ */
+
+        /* 1. Scroll-triggered fade + slide-up */
+        @@keyframes lx-fadeUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .lx-reveal {
+            opacity: 0;
+        }
+        .lx-reveal.lx-visible {
+            animation: lx-fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        /* Staggered children */
+        .lx-reveal-group > * {
+            opacity: 0;
+        }
+        .lx-reveal-group.lx-visible > *:nth-child(1) { animation: lx-fadeUp 0.5s 0.05s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .lx-reveal-group.lx-visible > *:nth-child(2) { animation: lx-fadeUp 0.5s 0.13s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .lx-reveal-group.lx-visible > *:nth-child(3) { animation: lx-fadeUp 0.5s 0.21s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .lx-reveal-group.lx-visible > *:nth-child(4) { animation: lx-fadeUp 0.5s 0.29s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .lx-reveal-group.lx-visible > *:nth-child(5) { animation: lx-fadeUp 0.5s 0.37s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .lx-reveal-group.lx-visible > *:nth-child(n+6) { animation: lx-fadeUp 0.5s 0.45s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+        /* 2. Badge pulse */
+        @@keyframes lx-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+            50%       { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+        }
+        .badge-available { animation: lx-pulse 2.5s infinite; }
+
+        @@keyframes lx-pulseSold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(168,85,247,0.4); }
+            50%       { box-shadow: 0 0 0 6px rgba(168,85,247,0); }
+        }
+        .badge-sold { animation: lx-pulseSold 2.5s infinite; }
+
+        /* 3. Button ripple host */
+        .lx-btn-gold, .lx-btn-ghost, .lx-btn-logout,
+        .lx-submit, .btn-confirm-reject {
+            position: relative;
+            overflow: hidden;
+        }
+        .lx-ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: lx-rippleAnim 0.55s linear;
+            background: rgba(255,255,255,0.25);
+            pointer-events: none;
+        }
+        @@keyframes lx-rippleAnim {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* 4. Input gold glow on focus */
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(201,162,39,0.35) !important;
+            border-color: rgba(201,162,39,0.6) !important;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        /* 5. Shimmer skeleton loader */
+        @@keyframes lx-shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position: 600px 0; }
+        }
+        .lx-skeleton {
+            border-radius: 8px;
+            background: linear-gradient(90deg, #1a1d24 25%, #23263a 50%, #1a1d24 75%);
+            background-size: 600px 100%;
+            animation: lx-shimmer 1.6s infinite;
+        }
+
+        /* 6. Page-load navbar slide-down */
+        @@keyframes lx-navSlide {
+            from { transform: translateY(-60px); opacity: 0; }
+            to   { transform: translateY(0);     opacity: 1; }
+        }
+        .lx-nav { animation: lx-navSlide 0.5s cubic-bezier(0.22,1,0.36,1) both; }
     </style>
 
     @await RenderSectionAsync("Styles", required: false)
@@ -320,7 +404,7 @@
                     if (isAdded) {
                         icon.classList.remove('fa-regular');
                         icon.classList.add('fa-solid', 'heart-animate');
-                        icon.style.color = '#c9a227';
+                        icon.style.color = '#ef4444';
                     } else {
                         icon.classList.remove('fa-solid');
                         icon.classList.add('fa-regular');
@@ -348,6 +432,40 @@
                 }
             });
         };
+    </script>
+
+    <script>
+        /* ── Global Animations JS ── */
+
+        // 1. Scroll-triggered reveal via IntersectionObserver
+        (function() {
+            const targets = document.querySelectorAll('.lx-reveal, .lx-reveal-group');
+            if (!targets.length) return;
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('lx-visible');
+                        io.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.12 });
+            targets.forEach(t => io.observe(t));
+        })();
+
+        // 2. Ripple effect on buttons
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest(
+                '.lx-btn-gold, .lx-btn-ghost, .lx-btn-logout, .lx-submit, .btn-confirm-reject'
+            );
+            if (!btn) return;
+            const ripple = document.createElement('span');
+            ripple.className = 'lx-ripple';
+            const rect = btn.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size/2}px;top:${e.clientY - rect.top - size/2}px`;
+            btn.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        });
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)
