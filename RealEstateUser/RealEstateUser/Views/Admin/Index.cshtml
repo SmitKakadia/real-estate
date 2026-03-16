@@ -605,41 +605,6 @@
         if (t) t.style.display = 'none';
     }, 4000);
     
-    // Show a dynamic toast message
-    function showToast(msg, isError = false) {
-        // Remove existing toast if any
-        let existing = document.getElementById('dynamicToast');
-        if (existing) existing.remove();
-        
-        let color = isError ? '#f87171' : '#4ade80';
-        let border = isError ? 'rgba(239,68,68,0.4)' : 'rgba(74,222,128,0.4)';
-        let icon = isError ? 'fa-triangle-exclamation' : 'fa-circle-check';
-        
-        let toast = document.createElement('div');
-        toast.id = 'dynamicToast';
-        toast.className = 'toast-msg';
-        toast.style.borderColor = border;
-        toast.style.color = color;
-        toast.innerHTML = `<i class="fa-solid ${icon} me-2"></i>${msg}`;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => { toast.style.display = 'none'; toast.remove(); }, 4000);
-    }
-    
-    // Update Pending Count
-    function updatePendingCount() {
-        let cards = document.querySelectorAll('.approval-card');
-        let countBadge = document.querySelector('.section-anchor#moderation .section-title').nextElementSibling;
-        if (countBadge) {
-            countBadge.textContent = cards.length + " Awaiting Review";
-            if(cards.length === 0) {
-                // Refresh to show the empty state message if none left
-                location.reload();
-            }
-        }
-    }
-    
     // Handle Approve
     function handleApprove(propertyId, btnElement) {
         // Find the card container
@@ -656,24 +621,23 @@
             data: { id: propertyId },
             success: function (res) {
                 if (res.success) {
-                    showToast("Property Approved successfully.");
+                    lxToast("Property Approved successfully.", 'success');
                     // Remove card with animation
                     card.style.transition = "all 0.4s ease";
                     card.style.opacity = "0";
                     card.style.transform = "scale(0.95)";
                     setTimeout(() => { 
                         card.remove(); 
-                        updatePendingCount(); 
-                        location.reload(); // FORCE RELOAD to update all dashboard stats
+                        location.reload();
                     }, 400);
                 } else {
-                    showToast(res.message || "Failed to approve property.", true);
+                    lxToast(res.message || "Failed to approve property.", 'error');
                     btnElement.innerHTML = originalText;
                     btnElement.disabled = false;
                 }
             },
             error: function () {
-                showToast("Failed to approve property.", true);
+                lxToast("Failed to approve property.", 'error');
                 btnElement.innerHTML = originalText;
                 btnElement.disabled = false;
             }
@@ -706,7 +670,7 @@
         let reason = document.getElementById('rejectReasonText').value;
         
         if (!reason || reason.trim() === '') {
-            alert("Please provide a rejection reason.");
+            lxToast('Please provide a rejection reason.', 'info');
             return;
         }
 
@@ -724,7 +688,7 @@
                     // ✅ Capture the card BEFORE closeRejectModal() sets currentRejectCard = null
                     let cardToRemove = currentRejectCard;
 
-                    showToast("Property Rejected.");
+                    lxToast("Property Rejected.", 'info');
                     closeRejectModal();
                     
                     // Remove card with animation, then reload
@@ -739,13 +703,13 @@
                         location.reload();
                     }, 500);
                 } else {
-                    showToast(res.message || "Failed to reject property.", true);
+                    lxToast(res.message || "Failed to reject property.", 'error');
                     confirmBtn.innerHTML = originalHtml;
                     confirmBtn.disabled = false;
                 }
             },
             error: function () {
-                showToast("Failed to reject property.", true);
+                lxToast("Failed to reject property.", 'error');
                 confirmBtn.innerHTML = originalHtml;
                 confirmBtn.disabled = false;
             }

@@ -258,22 +258,9 @@
         .lx-reveal-group.lx-visible > *:nth-child(5) { animation: lx-fadeUp 0.5s 0.37s cubic-bezier(0.22,1,0.36,1) forwards; }
         .lx-reveal-group.lx-visible > *:nth-child(n+6) { animation: lx-fadeUp 0.5s 0.45s cubic-bezier(0.22,1,0.36,1) forwards; }
 
-        /* 2. Badge pulse */
-        @@keyframes lx-pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
-            50%       { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
-        }
-        .badge-available { animation: lx-pulse 2.5s infinite; }
-
-        @@keyframes lx-pulseSold {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(168,85,247,0.4); }
-            50%       { box-shadow: 0 0 0 6px rgba(168,85,247,0); }
-        }
-        .badge-sold { animation: lx-pulseSold 2.5s infinite; }
-
-        /* 3. Button ripple host */
+        /* 2. Button ripple host */
         .lx-btn-gold, .lx-btn-ghost, .lx-btn-logout,
-        .lx-submit, .btn-confirm-reject {
+        .lx-submit {
             position: relative;
             overflow: hidden;
         }
@@ -289,7 +276,7 @@
             to { transform: scale(4); opacity: 0; }
         }
 
-        /* 4. Input gold glow on focus */
+        /* 3. Input gold glow on focus */
         input:focus, textarea:focus, select:focus {
             outline: none;
             box-shadow: 0 0 0 2px rgba(201,162,39,0.35) !important;
@@ -297,24 +284,60 @@
             transition: box-shadow 0.2s, border-color 0.2s;
         }
 
-        /* 5. Shimmer skeleton loader */
-        @@keyframes lx-shimmer {
-            0%   { background-position: -600px 0; }
-            100% { background-position: 600px 0; }
-        }
-        .lx-skeleton {
-            border-radius: 8px;
-            background: linear-gradient(90deg, #1a1d24 25%, #23263a 50%, #1a1d24 75%);
-            background-size: 600px 100%;
-            animation: lx-shimmer 1.6s infinite;
-        }
-
-        /* 6. Page-load navbar slide-down */
+        /* 4. Page-load navbar slide-down */
         @@keyframes lx-navSlide {
             from { transform: translateY(-60px); opacity: 0; }
             to   { transform: translateY(0);     opacity: 1; }
         }
         .lx-nav { animation: lx-navSlide 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+
+        /* ── Global Toast ── */
+        @@keyframes lxToastIn {
+            from { opacity: 0; transform: translateX(120%); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @@keyframes lxToastOut {
+            from { opacity: 1; transform: translateX(0); }
+            to   { opacity: 0; transform: translateX(120%); }
+        }
+        .lx-toast {
+            position: fixed;
+            top: 5rem;
+            right: 1.5rem;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.4rem;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+            animation: lxToastIn 0.35s cubic-bezier(0.22,1,0.36,1) forwards;
+            max-width: 90vw;
+            pointer-events: none;
+        }
+        .lx-toast.lx-toast-success {
+            background: rgba(15, 28, 18, 0.92);
+            border: 1px solid rgba(74,222,128,0.35);
+            color: #4ade80;
+        }
+        .lx-toast.lx-toast-error {
+            background: rgba(28, 12, 12, 0.92);
+            border: 1px solid rgba(239,68,68,0.35);
+            color: #f87171;
+        }
+        .lx-toast.lx-toast-info {
+            background: rgba(12, 18, 30, 0.92);
+            border: 1px solid rgba(201,162,39,0.35);
+            color: #c9a227;
+        }
+        .lx-toast.lx-toast-out {
+            animation: lxToastOut 0.3s ease forwards;
+        }
     </style>
 
     @await RenderSectionAsync("Styles", required: false)
@@ -365,11 +388,7 @@
         @RenderBody()
     </div>
 
-    <!-- Global Toast Notification -->
-    <div id="globalToast" style="position:fixed; top:80px; right:20px; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4); border-radius:8px; padding:12px 20px; display:flex; align-items:center; gap:10px; z-index:9999; box-shadow:0 8px 20px rgba(0,0,0,0.4); backdrop-filter:blur(8px); transform:translateX(150%); transition:transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); color:#4ade80;">
-        <i class="fa-solid fa-circle-check" style="font-size:1.1rem;"></i>
-        <span id="globalToastMessage" style="font-size:0.8rem; font-weight:600; letter-spacing:0.5px;"></span>
-    </div>
+    <!-- No legacy globalToast needed — lxToast() handles everything -->
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -379,14 +398,34 @@
         document.addEventListener('DOMContentLoaded', () => {
             const toastMessage = '@TempData["ToastMessage"]';
             if(toastMessage && toastMessage.trim() !== '') {
-                const toast = document.getElementById('globalToast');
-                document.getElementById('globalToastMessage').textContent = toastMessage;
-                toast.style.transform = 'translateX(0)';
-                setTimeout(() => {
-                    toast.style.transform = 'translateX(150%)';
-                }, 3000);
+                lxToast(toastMessage, 'success');
             }
         });
+
+        /* ── Global lxToast function ── */
+        window.lxToast = function(msg, type) {
+            // type: 'success' | 'error' | 'info'
+            type = type || 'success';
+            // Remove any existing toast
+            document.querySelectorAll('.lx-toast').forEach(function(t) { t.remove(); });
+
+            var iconMap = {
+                success: 'fa-circle-check',
+                error:   'fa-triangle-exclamation',
+                info:    'fa-circle-info'
+            };
+
+            var toast = document.createElement('div');
+            toast.className = 'lx-toast lx-toast-' + type;
+            toast.innerHTML = '<i class="fa-solid ' + (iconMap[type] || 'fa-circle-check') + '"></i><span>' + msg + '</span>';
+            document.body.appendChild(toast);
+
+            // Auto-dismiss after 3.5s
+            setTimeout(function() {
+                toast.classList.add('lx-toast-out');
+                setTimeout(function() { toast.remove(); }, 320);
+            }, 3500);
+        };
 
         /* ── Favourite toggle (unchanged — keep all AJAX logic) ── */
         window.toggleFavorite = function(e, id) {
@@ -423,12 +462,12 @@
                 success: function(response) {
                     if (!response.success) {
                         applyState(isCurrentlySaved);
-                        alert(response.message);
+                        lxToast(response.message, 'error');
                     }
                 },
                 error: function() {
                     applyState(isCurrentlySaved);
-                    alert('Error connecting to server.');
+                    lxToast('Error connecting to server.', 'error');
                 }
             });
         };
@@ -455,7 +494,7 @@
         // 2. Ripple effect on buttons
         document.addEventListener('click', function(e) {
             const btn = e.target.closest(
-                '.lx-btn-gold, .lx-btn-ghost, .lx-btn-logout, .lx-submit, .btn-confirm-reject'
+                '.lx-btn-gold, .lx-btn-ghost, .lx-btn-logout, .lx-submit'
             );
             if (!btn) return;
             const ripple = document.createElement('span');

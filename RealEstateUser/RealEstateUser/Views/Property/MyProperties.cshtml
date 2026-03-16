@@ -408,10 +408,10 @@
                 url: '@Url.Action("DeleteProperty", "Property")' + '/' + propertyId,
                 type: 'DELETE',
                 success: function (response) {
-                    if (response.success) { alert(response.message); location.reload(); }
-                    else { alert("Failed to delete property: " + response.message); }
+                    if (response.success) { lxToast(response.message, 'success'); setTimeout(() => { location.reload(); }, 1200); }
+                    else { lxToast('Failed to delete property: ' + response.message, 'error'); }
                 },
-                error: function () { alert("Error deleting property."); }
+                error: function () { lxToast('Error deleting property.', 'error'); }
             });
         }
     }
@@ -424,13 +424,13 @@
                 data: { propertyID: propertyId },
                 success: function (response) {
                     if (response.success) { 
-                        alert(response.message); 
-                        location.reload(); 
+                        lxToast(response.message, 'success'); 
+                        setTimeout(() => { location.reload(); }, 1200); 
                     } else { 
-                        alert(response.message); 
+                        lxToast(response.message, 'error'); 
                     }
                 },
-                error: function () { alert("Error canceling lease."); }
+                error: function () { lxToast('Error canceling lease.', 'error'); }
             });
         }
     }

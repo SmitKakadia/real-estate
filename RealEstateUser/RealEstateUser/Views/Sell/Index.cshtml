@@ -530,7 +530,7 @@
             const mainImg = document.getElementById('imageUpload');
             if (mainImg && mainImg.files.length > 0) {
                 if (mainImg.files[0].size > maxFileSize) {
-                    alert('The cover image is too large. Maximum allowed size is 10MB.');
+                    lxToast('The cover image is too large. Maximum allowed size is 10MB.', 'error');
                     e.preventDefault();
                     return;
                 }
@@ -541,7 +541,7 @@
             if (addImgs && addImgs.files.length > 0) {
                 for(let i=0; i<addImgs.files.length; i++) {
                     if(addImgs.files[i].size > maxFileSize) {
-                        alert('One or more additional images are too large. Maximum allowed size per image is 10MB.');
+                        lxToast('One or more additional images are too large. Maximum allowed size per image is 10MB.', 'error');
                         e.preventDefault();
                         return;
                     }

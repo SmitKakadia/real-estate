@@ -228,12 +228,12 @@
                     setTimeout(function () { card.remove(); }, 350);
                 } else {
                     card.removeClass('card-removing');
-                    alert(response.message);
+                    lxToast(response.message, 'error');
                 }
             },
             error: function () {
                 card.removeClass('card-removing');
-                alert('Error connecting to server.');
+                lxToast('Error connecting to server.', 'error');
             }
         });
     }

@@ -635,13 +635,13 @@
                 type: 'POST',
                 data: { propertyID: propertyId },
                 success: function (response) {
-                    alert(response.message);
-                    window.location.href = '@Url.Action("MyProperties", "Property")';
+                    lxToast(response.message, 'success');
+                    setTimeout(() => { window.location.href = '@Url.Action("MyProperties", "Property")'; }, 1200);
                 },
                 error: function (xhr) {
                     var errorMsg = xhr.responseText || 'Error buying property.';
-                    alert(errorMsg);
-                    window.location.href = '@Url.Action("MyProperties", "Property")';
+                    lxToast(errorMsg, 'error');
+                    setTimeout(() => { window.location.href = '@Url.Action("MyProperties", "Property")'; }, 1200);
                 }
             });
         });
@@ -695,14 +695,14 @@
                     // Clear textarea
                     $("#Description").val('');
 
-                    alert(response);
+                    lxToast(response, 'success');
                     
                     // Live reload feedback
                     loadFeedback();
                 },
                 error: function (xhr) {
                     var errorMsg = xhr.responseText || 'Error submitting feedback.';
-                    alert(errorMsg);
+                    lxToast(errorMsg, 'error');
                 }
             });
         });

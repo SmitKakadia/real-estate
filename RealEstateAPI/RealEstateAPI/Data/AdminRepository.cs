@@ -26,7 +26,7 @@ namespace RealEstateAPI.Data
                     SELECT 
                         (SELECT COUNT(*) FROM [User]) AS TotalUsers,
                         (SELECT COUNT(*) FROM Property WHERE Status = 'Available') AS ActiveProperties,
-                        (SELECT COUNT(*) FROM Property WHERE Status = 'Pending') AS PendingApprovals,
+                        (SELECT COUNT(*) FROM Property WHERE Status = 'Pending' AND RejectionReason IS NULL) AS PendingApprovals,
                         (SELECT COUNT(*) FROM [Transaction]) AS TotalTransactions,
                         (SELECT ISNULL(SUM(Amount), 0) FROM [Transaction]) AS TotalVolume", conn);
                 

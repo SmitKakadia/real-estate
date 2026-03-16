@@ -1,4 +1,4 @@
-﻿@model IEnumerable<RealEstateUser.Models.PropertyModel>
+@model IEnumerable<RealEstateUser.Models.PropertyModel>
 
 @{
     ViewData["Title"] = "My Properties";
@@ -148,11 +148,11 @@
                         let editModal = new bootstrap.Modal(document.getElementById('editPropertyModal'));
                         editModal.show();
                     } else {
-                        alert("Error: No property data received.");
+                        lxToast('Error: No property data received.', 'error');
                     }
                 },
                 error: function () {
-                    alert('Error retrieving property details.');
+                    lxToast('Error retrieving property details.', 'error');
                 }
             });
         }
@@ -170,11 +170,11 @@
                 contentType: false,
                 processData: false,
                 success: function (response) {
-                    alert("Property updated successfully!");
-                    location.reload(); // Refresh the page to update the property list
+                    lxToast('Property updated successfully!', 'success');
+                    setTimeout(() => { location.reload(); }, 1200);
                 },
                 error: function () {
-                    alert('Error updating property.');
+                    lxToast('Error updating property.', 'error');
                 }
             });
         });
