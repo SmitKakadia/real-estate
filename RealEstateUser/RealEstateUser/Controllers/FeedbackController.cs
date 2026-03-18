@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using RealEstateUser.Models;
 using System.Net.Http;
 using System.Net.Http.Headers;
